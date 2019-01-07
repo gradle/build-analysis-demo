@@ -5,30 +5,24 @@ package org.gradle.buildeng.app
 
 import com.beust.jcommander.JCommander
 import com.beust.jcommander.ParameterException
+import org.gradle.buildeng.data.collection.ExportClientSpec
 import org.gradle.buildeng.data.collection.GradleEnterpriseBuildScanCollector
-import ratpack.exec.Operation
-import ratpack.exec.internal.DefaultExecController
-import ratpack.func.Block
-import ratpack.util.Exceptions
-import java.io.File
-import java.io.PrintWriter
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
+import org.gradle.buildeng.data.collection.ServerConnectionInfo
+import java.net.InetSocketAddress
+import java.time.Duration
+import java.time.Instant
 
 class App {
-    fun runFeedbackLoopAnalysis() {
-        val serverUrl = TODO()
-        val username = TODO()
-        val password = TODO()
-        val outputFilePath = "/tmp/feedback2.tsv"
+    fun runFeedbackLoopAnalysis(args: Array<String>) {
+        val cliArgs: CliArgs = parseArgs(*args)
+        val exportClientSpec = ExportClientSpec.from(cliArgs)
 
-//        val exportClientSpec = ExportClientSpec(URI(serverUrl), username, password, 1, Paths.get(outputFilePath))
-//        val exportClient = GradleEnterpriseExportClient(exportClientSpec)
+        val serverAddress = InetSocketAddress(exportClientSpec.serverUri, 443)
+        val serverConnectionInfo = ServerConnectionInfo(serverAddress, exportClientSpec.username, exportClientSpec.password)
 
-        val writer = PrintWriter(File(outputFilePath))
-        GradleEnterpriseBuildScanCollector(serverUrl, username, password, writer).writeBuilds()
-//        StandaloneRatpackHarness.execute(exportClient.export(TaskTimingMetricsReduction(writer)))
+        val since = Instant.now().minus(Duration.ofDays(exportClientSpec.days.toLong()))
+
+        GradleEnterpriseBuildScanCollector(serverConnectionInfo, since, exportClientSpec.outputFile.toFile()).writeBuilds()
     }
 
     private fun parseArgs(vararg args: String): CliArgs {
@@ -51,33 +45,7 @@ class App {
     }
 }
 
-internal object StandaloneRatpackHarness {
-
-    @JvmOverloads
-    fun execute(op: Operation, awaitBackgroundTermination: Boolean = false) {
-        val error = AtomicReference<Throwable>()
-        val controller = DefaultExecController()
-        try {
-            val done = CountDownLatch(1)
-            controller.fork()
-                    .onComplete({ done.countDown() })
-                    .onError({ error.set(it) })
-                    .start(op)
-            Exceptions.uncheck(Block { done.await() })
-        } finally {
-            controller.close()
-            if (awaitBackgroundTermination) {
-                Exceptions.uncheck<Boolean>({ controller.executor.awaitTermination(10, TimeUnit.MINUTES) })
-            }
-        }
-        if (error.get() != null) {
-            throw Exceptions.uncheck(error.get())
-        }
-    }
-
-}
-
 fun main(args: Array<String>) {
     // TODO: allow selective analysis using CLI args: run --tests --tasks --errors --feedback-loops
-    App().runFeedbackLoopAnalysis()
+    App().runFeedbackLoopAnalysis(args)
 }
