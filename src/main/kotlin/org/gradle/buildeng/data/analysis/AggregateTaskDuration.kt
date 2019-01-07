@@ -20,4 +20,10 @@ class AggregateTaskDuration {
                 }
                 .values
     }
+
+    // TODO: given a list of buildId.out files...
+        // filter out ones that aren't for gradle/gradle
+        // group by CI/not-CI
+        //
+
 }

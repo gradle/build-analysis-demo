@@ -3,14 +3,11 @@ package org.gradle.buildeng.app
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.converters.IntegerConverter
 import com.beust.jcommander.converters.PathConverter
-import com.beust.jcommander.converters.URIConverter
-
-import java.net.URI
 import java.nio.file.Path
 
 class CliArgs {
-    @Parameter(names = ["--server", "-s"], description = "Url of Gradle Enterprise server", converter = URIConverter::class, required = true)
-    var server: URI? = null
+    @Parameter(names = ["--server", "-s"], description = "URL of Gradle Enterprise server", required = true)
+    var server: String? = null
 
     @Parameter(names = ["--username", "-u"], description = "Export API user")
     var username: String? = null
