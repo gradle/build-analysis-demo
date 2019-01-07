@@ -1,0 +1,10 @@
+== Gradle Build Analysis Project
+
+The purpose of this project is to provide data for developer productivity by collecting and reporting:
+ * Costliest Gradle tasks
+ * Flaky Tests
+ * Most common build errors
+
+This is separate from the CI Health project because it deals more directly with local development infrastructure.
+
+A project separate from the dotcom/export-api-app was needed to allow this to be presentable for users and to provide real-world feedback on the GE export API.
