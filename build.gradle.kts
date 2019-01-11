@@ -2,9 +2,6 @@ plugins {
     `build-scan`
 }
 
-group = "org.gradle.buildeng.analysis"
-version = "0.1.0"
-
 buildScan {
     termsOfServiceUrl = "https://gradle.com/terms-of-service"
     termsOfServiceAgree = "yes"
@@ -12,8 +9,11 @@ buildScan {
 }
 
 allprojects {
-  repositories {
-      maven { url = uri("https://maven-central.storage.googleapis.com") }
-      jcenter()
-  }
+    group = "org.gradle.buildeng.analysis"
+    version = "0.1.0"
+
+    repositories {
+        maven { url = uri("https://maven-central.storage.googleapis.com") }
+        jcenter()
+    }
 }
