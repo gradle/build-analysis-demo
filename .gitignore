@@ -4,4 +4,4 @@ build/
 *.iml
 *.ipr
 *.iws
-src/test/sample-files
+**/sample-files
