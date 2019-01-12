@@ -46,7 +46,6 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
     }
 
     fun consume(subscriptionId: String, gcsBucketName: String) {
-        // TODO: Create subscription dynamically
         val subscriptionName = ProjectSubscriptionName.of(ServiceOptions.getDefaultProjectId(), subscriptionId)
         var subscriber: Subscriber? = null
 
@@ -107,7 +106,7 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
         }
 
         return request
-                .flatMap({ response -> getContentAsSse(response) })
+                .flatMap({ response -> getContentAsSse(response) }, 20)
                 .doOnNext({ serverSentEvent: ServerSentEvent -> eventId.set(serverSentEvent.eventIdAsString) })
                 .onErrorResumeNext({
                     println("Error: ${it.message} — ${it.cause}")
