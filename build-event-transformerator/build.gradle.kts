@@ -1,6 +1,7 @@
 plugins {
     application
     `kotlin-dsl`
+    `maven-publish`
 }
 
 dependencies {
@@ -20,4 +21,16 @@ application {
 
 kotlinDslPluginOptions {
     experimentalWarning.set(false)
+}
+
+publishing {
+    repositories {
+        maven {
+            url = uri("gcs://gradle-build-analysis-apps/maven2")
+            // NOTE: Credentials for Google Cloud are sourced from well-known files or env variables
+        }
+    }
+    publications.withType<MavenPublication> {
+        artifact(tasks.distZip.get())
+    }
 }

@@ -9,10 +9,47 @@ This is separate from the CI Health project because it deals more directly with 
 
 A project separate from the dotcom/export-api-app was needed to allow this to be presentable for users and to provide real-world feedback on the GE export API.
 
-// TODO: Check out BigQueryML intro: https://cloud.google.com/bigquery/docs/bigqueryml-intro
-// https://cloud.google.com/blog/products/gcp/preparing-and-curating-your-data-for-machine-learning
+Reference: https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions
 
-// TODO: deploy apps to GCE
-// TODO: Kick off full pipeline in GCE
-// GOAL: Get full pipeline at least storing to GCS over the weekend
+// https://cloud.google.com/blog/products/gcp/preparing-and-curating-your-data-for-machine-learning
+// https://cloud.google.com/bigquery/docs/bigqueryml-scientist-start
+
+// TODO: filter only gradle/gradle builds
 // TODO: write app to index flaky test data
+// TODO: look into preemptible instances to save money
+
+=== Google Cloud initial setup
+```sh
+gcloud config set compute/zone us-central1-f
+gcloud config set compute/region us-central1
+```
+
+=== Publishing to Google Cloud
+
+
+
+=== Running applications in Google Cloud
+
+```sh
+gcloud compute instances create build-event-collectorator1 \
+   --image-family debian-9 \
+   --image-project debian-cloud \
+   --machine-type n1-standard-2 \
+   --scopes "userinfo-email,cloud-platform" \
+   --metadata startup-script='#!/bin/sh
+APP_NAME="build-event-collectorator"
+APP_VERSION="0.2.0"
+export GCS_RAW_BUCKET_NAME="gradle-task-test-cache-events-raw"
+export GCS_TRANSFORMED_BUCKET_NAME="gradle-build-events"
+gsutil cp "gs://gradle-build-analysis-apps/maven2/org/gradle/buildeng/analysis/${APP_NAME}/${APP_VERSION}/${APP_NAME}-${APP_VERSION}.zip" .
+apt-get update && apt-get -y --force-yes install openjdk-8-jdk unzip
+update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+echo "Running ${APP_NAME}-${APP_VERSION}..."
+unzip "${APP_NAME}-${APP_VERSION}.zip"
+sh "${APP_NAME}-${APP_VERSION}/bin/${APP_NAME}"
+echo "Application exited"'
+
+gcloud compute instances get-serial-port-output build-event-collectorator1
+
+
+```

@@ -1,6 +1,7 @@
 plugins {
     application
     `kotlin-dsl`
+    `maven-publish`
 }
 
 dependencies {
@@ -12,7 +13,6 @@ dependencies {
     implementation("io.reactivex:rxjava:1.2.10")
 
     implementation("com.fasterxml.jackson.core:jackson-databind:2.8.2")
-    implementation("com.google.cloud:google-cloud-pubsub:1.55.0")
     implementation("com.google.cloud:google-cloud-storage:1.55.0")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
@@ -25,4 +25,17 @@ application {
 
 kotlinDslPluginOptions {
     experimentalWarning.set(false)
+}
+
+publishing {
+    repositories {
+        maven {
+            url = uri("gcs://gradle-build-analysis-apps/maven2")
+            // NOTE: Credentials for Google Cloud are sourced from well-known files or env variables
+            //   See https://docs.gradle.org/current/userguide/repository_types.html#sub:supported_transport_protocols
+        }
+    }
+    publications.withType<MavenPublication> {
+        artifact(tasks.distZip.get())
+    }
 }
