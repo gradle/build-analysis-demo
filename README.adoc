@@ -1,6 +1,7 @@
 == Gradle Build Analysis Project
 
 The purpose of this project is to provide data for developer productivity by collecting and reporting:
+
  * Costliest Gradle tasks
  * Flaky Tests
  * Most common build errors
@@ -9,13 +10,13 @@ This is separate from the CI Health project because it deals more directly with 
 
 A project separate from the dotcom/export-api-app was needed to allow this to be presentable for users and to provide real-world feedback on the GE export API.
 
-Reference: https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions
+Reference Materials:
 
-// https://cloud.google.com/blog/products/gcp/preparing-and-curating-your-data-for-machine-learning
-// https://cloud.google.com/bigquery/docs/bigqueryml-scientist-start
+ * https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions
 
 // TODO: filter only gradle/gradle builds
 // TODO: write app to index flaky test data
+// TODO: look into BigQueryML: https://cloud.google.com/bigquery/docs/bigqueryml-scientist-start and https://cloud.google.com/blog/products/gcp/preparing-and-curating-your-data-for-machine-learning
 // TODO: look into preemptible instances to save money
 
 === Google Cloud initial setup
@@ -26,7 +27,11 @@ gcloud config set compute/region us-central1
 
 === Publishing to Google Cloud
 
+_NOTE: Make sure you're logged into Google Cloud first._
 
+```sh
+./gradlew publish
+```
 
 === Running applications in Google Cloud
 
@@ -48,8 +53,10 @@ echo "Running ${APP_NAME}-${APP_VERSION}..."
 unzip "${APP_NAME}-${APP_VERSION}.zip"
 sh "${APP_NAME}-${APP_VERSION}/bin/${APP_NAME}"
 echo "Application exited"'
+```
 
+==== Getting logs for a given instance
+
+```sh
 gcloud compute instances get-serial-port-output build-event-collectorator1
-
-
 ```
