@@ -25,11 +25,11 @@ import java.util.concurrent.atomic.AtomicReference
 class BuildProducer(private val geServer: ServerConnectionInfo) {
     private val httpClient = HttpClient.newClient(geServer.socketAddress).unsafeSecure()
 
-    fun produceFrom(pubSubTopicId: String, since: Instant) {
+    fun produceFrom(pubSubTopicId: String, since: Instant, lastEventId: String?) {
         val topicName = ProjectTopicName.of(ServiceOptions.getDefaultProjectId(), pubSubTopicId)
         val publisher = Publisher.newBuilder(topicName).build()
 
-        buildStream(since)
+        buildStream(since, lastEventId)
                 .doOnSubscribe({ println("Streaming builds...") })
                 .doAfterTerminate({
                     println("Shutting down publisher...")
@@ -66,8 +66,8 @@ class BuildProducer(private val geServer: ServerConnectionInfo) {
         return response.contentAsServerSentEvents
     }
 
-    private fun buildStream(since: Instant): Observable<ServerSentEvent> {
-        return resume("/build-export/v1/builds/since/${since.toEpochMilli()}", null)
+    private fun buildStream(since: Instant, lastEventId: String?): Observable<ServerSentEvent> {
+        return resume("/build-export/v1/builds/since/${since.toEpochMilli()}", lastEventId)
     }
 
     private fun resume(url: String, lastEventId: String?): Observable<ServerSentEvent> {

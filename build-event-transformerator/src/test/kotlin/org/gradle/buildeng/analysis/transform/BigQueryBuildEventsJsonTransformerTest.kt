@@ -22,6 +22,10 @@ class BigQueryBuildEventsJsonTransformerTest {
 
         assertEquals("f23vwoax6n4uy", jsonNode.get("buildId").asText())
 
+//        jsonNode.find { node ->
+//            node.get("event").findPath("")
+//        }
+
         assertTrue(jsonNode.get("event").isArray)
         assertTrue(jsonNode.get("event").get(0).get("type").isObject)
         assertTrue(jsonNode.get("event").get(0).get("timestamp").isTextual)

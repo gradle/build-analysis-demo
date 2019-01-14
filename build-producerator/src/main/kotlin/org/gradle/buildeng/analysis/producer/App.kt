@@ -9,7 +9,5 @@ fun main(args: Array<String>) {
             Duration.ofDays(System.getenv("BACKFILL_DAYS").toLong())
     )
     BuildProducer(ServerConnectionInfo.fromEnv())
-            .produceFrom(
-                    System.getenv("PUBSUB_TOPIC"),
-                    since)
+            .produceFrom(System.getenv("PUBSUB_TOPIC"), since, System.getenv("LAST_BUILD_ID"))
 }
