@@ -1,23 +1,51 @@
-== Gradle Build Analysis Project
+= Gradle Build Analysis Project
 
 The purpose of this project is to provide data for developer productivity by collecting and reporting:
 
- * Costliest Gradle tasks
- * Flaky Tests
- * Most common build errors
+ * What are the costliest tasks (time x frequency) of local developers, by project?
+   * What is the breakdown of these tasks in terms of cache effectiveness, network, something else?
+   * Given a task, tell me the cache rate, mean/stddev/histogram, inputs, network, etc. How has this changed over time?
+ * What are the costliest errors (again, time x frequency) and build failures, segmented by environment and failure type?
+   * What is the impact of flaky test failures on local builds?
+ * What versions of Gradle BT are in use at Gradle, and with what frequency? Similarly, what versions of guava are in use at Gradle across among active projects?
+
+These applications collect and index Gradle Enterprise and GitHub events data into Google Cloud Storage and BigQuery.
 
 This is separate from the CI Health project because it deals more directly with local development infrastructure.
-
 A project separate from the dotcom/export-api-app was needed to allow this to be presentable for users and to provide real-world feedback on the GE export API.
+
+== Querying the data
+You can query build data using:
+
+ * Google Cloud Project: `build-analysis`
+ * BigQuery Dataset: `gradle_builds`
+ * BigQuery Tables: `builds_YYYYMMDD`
+
+Some fields are JSON. See link:https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions[BigQuery JSON functions] for reference.
+
+== Project structure
+
+==== Build Event Collector app
+This application is responsible for streaming build event data from a configured Gradle Enterprise export API endpoint into a specified Google Cloud Storage bucket.
+It pulls all builds down and all configured event types, avoiding as much data interaction (parsing, filtering) as possible.
 
 Reference Materials:
 
- * https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions
+ * link:https://docs.gradle.com/enterprise/export-api/[Gradle Enterprise Export API Manual]
+ * link:https://cloud.google.com/storage/docs/uploading-objects#storage-upload-object-java[Google Cloud Storage docs]
 
-// TODO: filter only gradle/gradle builds
-// TODO: write app to index flaky test data
+==== Build Event Transform apps
+These applications are responsible for transforming raw data and indexing in Google BigQuery.
+Each application consists of a `BuildTransformer` which filters and transforms the data and stores it, and a `BuildIndexer` which submits a job to index data using in BigQuery using a given schema (recommended) or auto-detected.
+
+Reference Materials:
+
+ * link:https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-json[Loading JSON data into BigQuery]
+
+// TODO: dashboard application which hits BigQuery and produces slick charts
 // TODO: look into BigQueryML: https://cloud.google.com/bigquery/docs/bigqueryml-scientist-start and https://cloud.google.com/blog/products/gcp/preparing-and-curating-your-data-for-machine-learning
-// TODO: look into preemptible instances to save money
+
+== Development
 
 === Google Cloud initial setup
 ```sh
@@ -33,19 +61,54 @@ _NOTE: Make sure you're logged into Google Cloud first._
 ./gradlew publish
 ```
 
+This will publish to a Maven Repository setup at
+
 === Running applications in Google Cloud
 
+==== Running Build Event Collector
 ```sh
 gcloud compute instances create build-event-collectorator1 \
+   --preemptible \
    --image-family debian-9 \
    --image-project debian-cloud \
-   --machine-type n1-standard-2 \
+   --machine-type n1-standard-8 \
    --scopes "userinfo-email,cloud-platform" \
    --metadata startup-script='#!/bin/sh
 APP_NAME="build-event-collectorator"
+APP_VERSION="0.3.0"
+export GRADLE_ENTERPRISE_HOSTNAME="gradle-enterprise.mycompany.com"
+export GRADLE_ENTERPRISE_USERNAME="my-username"
+export GRADLE_ENTERPRISE_PASSWORD="my-password"
+export GCS_RAW_BUCKET_NAME="gradle-task-test-cache-events-raw"
+gsutil cp "gs://gradle-build-analysis-apps/maven2/org/gradle/buildeng/analysis/${APP_NAME}/${APP_VERSION}/${APP_NAME}-${APP_VERSION}.zip" .
+apt-get update && apt-get -y --force-yes install openjdk-8-jdk unzip
+update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+echo "Running ${APP_NAME}-${APP_VERSION}..."
+unzip "${APP_NAME}-${APP_VERSION}.zip"
+sh "${APP_NAME}-${APP_VERSION}/bin/${APP_NAME}"
+echo "Application exited"'
+```
+
+By default the collector processes only builds from the moment the app is started, but you can collect past builds by setting `export BACKFILL_DAYS=<number>` in the startup script.
+
+Similarly, you can specify a `export LAST_BUILD_ID="jh4qknspatp2y"` to start streaming from the build _immediately after_ the given build ID.
+
+==== Running a Build Event Indexer
+
+```sh
+gcloud compute instances create build-event-indexerator1 \
+   --preemptible \
+   --image-family debian-9 \
+   --image-project debian-cloud \
+   --machine-type n1-standard-4 \
+   --scopes "userinfo-email,cloud-platform" \
+   --metadata startup-script='#!/bin/sh
+APP_NAME="build-event-indexerator"
 APP_VERSION="0.2.0"
 export GCS_RAW_BUCKET_NAME="gradle-task-test-cache-events-raw"
-export GCS_TRANSFORMED_BUCKET_NAME="gradle-build-events"
+export GCS_TRANSFORMED_BUCKET_NAME="gradle-task-test-cache-events"
+export BIGQUERY_DATASET_NAME="gradle_builds"
+export BIGQUERY_TABLE_NAME="builds_20190115"
 gsutil cp "gs://gradle-build-analysis-apps/maven2/org/gradle/buildeng/analysis/${APP_NAME}/${APP_VERSION}/${APP_NAME}-${APP_VERSION}.zip" .
 apt-get update && apt-get -y --force-yes install openjdk-8-jdk unzip
 update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
@@ -56,7 +119,6 @@ echo "Application exited"'
 ```
 
 ==== Getting logs for a given instance
-
 ```sh
 gcloud compute instances get-serial-port-output build-event-collectorator1
 ```
