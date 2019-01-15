@@ -106,14 +106,13 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
                 .createGet(url)
                 .addHeader("Authorization", authValue)
                 .addHeader("Accept", "text/event-stream")
-                .addHeader("Accept-Encoding", "gzip")
 
         if (lastEventId != null) {
             request = request.addHeader("Last-Event-ID", lastEventId)
         }
 
         return request
-                .flatMap({ response -> getContentAsSse(response) }, 4)
+                .flatMap({ response -> getContentAsSse(response) })
                 .doOnNext({ serverSentEvent: ServerSentEvent -> eventId.set(serverSentEvent.eventIdAsString) })
                 .onErrorResumeNext({
                     println("Error: ${it.message} — ${it.cause}")
