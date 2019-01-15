@@ -1,6 +1,5 @@
 plugins {
     application
-    `kotlin-dsl`
     `maven-publish`
 }
 
@@ -19,13 +18,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
-application {
-    mainClassName = "org.gradle.buildeng.analysis.consumer.AppKt"
-}
-
-kotlinDslPluginOptions {
-    experimentalWarning.set(false)
-}
+application.mainClassName = "org.gradle.buildeng.analysis.consumer.AppKt"
 
 publishing {
     repositories {
