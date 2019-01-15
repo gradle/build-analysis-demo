@@ -42,6 +42,11 @@ Reference Materials:
 
  * link:https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-json[Loading JSON data into BigQuery]
 
+==== Build Producerator app
+This app is not necessary right now. It streamed build events to Google Cloud PubSub to allow fanout with many build event collectors.
+
+Currently the limiting factor is network outbound from the Gradle Enterprise server and multiple downloaders do not make processing faster.
+
 // TODO: dashboard application which hits BigQuery and produces slick charts
 // TODO: look into BigQueryML: https://cloud.google.com/bigquery/docs/bigqueryml-scientist-start and https://cloud.google.com/blog/products/gcp/preparing-and-curating-your-data-for-machine-learning
 
