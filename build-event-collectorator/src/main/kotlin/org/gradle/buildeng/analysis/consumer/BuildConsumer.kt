@@ -52,7 +52,7 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
                                 serverSentEvents.forEach { assert(it.release()) }
                                 println("[${System.currentTimeMillis()}] $blobKey written")
                             })
-                }, 32)
+                }, 20)
                 .toBlocking()
                 .subscribe()
     }
