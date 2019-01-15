@@ -106,6 +106,7 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
                 .createGet(url)
                 .addHeader("Authorization", authValue)
                 .addHeader("Accept", "text/event-stream")
+                .addHeader("Accept-Encoding", "gzip")
 
         if (lastEventId != null) {
             request = request.addHeader("Last-Event-ID", lastEventId)
