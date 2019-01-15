@@ -1,6 +1,5 @@
 plugins {
     application
-    `kotlin-dsl`
 }
 
 dependencies {
@@ -20,8 +19,4 @@ dependencies {
 
 application {
     mainClassName = "org.gradle.buildeng.analysis.producer.AppKt"
-}
-
-kotlinDslPluginOptions {
-    experimentalWarning.set(false)
 }

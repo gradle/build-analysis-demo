@@ -1,5 +1,6 @@
 plugins {
     `build-scan`
+    `kotlin-dsl`
 }
 
 buildScan {
@@ -10,10 +11,18 @@ buildScan {
 
 allprojects {
     group = "org.gradle.buildeng.analysis"
-    version = "0.2.1"
+    version = "0.3.0"
 
     repositories {
         maven { url = uri("https://maven-central.storage.googleapis.com") }
         jcenter()
+    }
+}
+
+subprojects {
+    apply(plugin = "org.gradle.kotlin.kotlin-dsl")
+
+    kotlinDslPluginOptions {
+        experimentalWarning.set(false)
     }
 }

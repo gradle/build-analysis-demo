@@ -3,7 +3,6 @@ package org.gradle.buildeng.analysis.indexing
 import com.google.cloud.bigquery.*
 
 
-
 class BuildIndexer {
 
     private val buildId: Field = Field.newBuilder("buildId", LegacySQLTypeName.STRING).setMode(Field.Mode.REQUIRED).setDescription("Unique build ID").build()

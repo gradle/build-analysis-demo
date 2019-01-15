@@ -1,6 +1,5 @@
 plugins {
     application
-    `kotlin-dsl`
     `maven-publish`
 }
 
@@ -17,11 +16,7 @@ dependencies {
 }
 
 application {
-    mainClassName = "org.gradle.buildeng.analysis.indexing.AppKt"
-}
-
-kotlinDslPluginOptions {
-    experimentalWarning.set(false)
+    mainClassName = "org.gradle.buildeng.analysis.AppKt"
 }
 
 publishing {
