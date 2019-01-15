@@ -41,16 +41,18 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
                             .doOnSubscribe({ println("Streaming events for build $buildId ") })
                             .toList()
                             .map({ serverSentEvents ->
-                                val blobKey = "$buildId-build-events-json.txt"
-                                val blobInfo = BlobInfo
-                                        .newBuilder(BlobId.of(gcsBucketName, blobKey))
-                                        .setContentType("text/plain")
-                                        .build()
+                                try {
+                                    val blobKey = "$buildId-build-events-json.txt"
+                                    val blobInfo = BlobInfo
+                                            .newBuilder(BlobId.of(gcsBucketName, blobKey))
+                                            .setContentType("text/plain")
+                                            .build()
 
-                                storage.create(blobInfo, byteBufsToJoinedArray(serverSentEvents))
-
-                                serverSentEvents.forEach { assert(it.release()) }
-                                println("[${System.currentTimeMillis()}] $blobKey written")
+                                    storage.create(blobInfo, byteBufsToJoinedArray(serverSentEvents))
+                                    println("[${System.currentTimeMillis()}] $blobKey written")
+                                } finally {
+                                    serverSentEvents.forEach { assert(it.release()) }
+                                }
                             })
                 }, 20)
                 .toBlocking()
