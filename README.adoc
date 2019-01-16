@@ -3,10 +3,10 @@
 The purpose of this project is to provide data for developer productivity by collecting and reporting:
 
  * What are the costliest tasks (time x frequency) of local developers, by project?
-   * What is the breakdown of these tasks in terms of cache effectiveness, network, something else?
-   * Given a task, tell me the cache rate, mean/stddev/histogram, inputs, network, etc. How has this changed over time?
+ ** What is the breakdown of these tasks in terms of cache effectiveness, network, something else?
+ ** Given a task, tell me the cache rate, mean/stddev/histogram, inputs, network, etc. How has this changed over time?
  * What are the costliest errors (again, time x frequency) and build failures, segmented by environment and failure type?
-   * What is the impact of flaky test failures on local builds?
+ ** What is the impact of flaky test failures on local builds?
  * What versions of Gradle BT are in use at Gradle, and with what frequency? Similarly, what versions of guava are in use at Gradle across among active projects?
 
 These applications collect and index Gradle Enterprise and GitHub events data into Google Cloud Storage and BigQuery.
@@ -47,6 +47,8 @@ This app is not necessary right now. It streamed build events to Google Cloud Pu
 
 Currently the limiting factor is network outbound from the Gradle Enterprise server and multiple downloaders do not make processing faster.
 
+// todo: collect raw events into day-segmented bucket keys
+// TODO: generate JSON and BigQuery models from POKOs
 // TODO: dashboard application which hits BigQuery and produces slick charts
 // TODO: look into BigQueryML: https://cloud.google.com/bigquery/docs/bigqueryml-scientist-start and https://cloud.google.com/blog/products/gcp/preparing-and-curating-your-data-for-machine-learning
 
@@ -66,7 +68,7 @@ _NOTE: Make sure you're logged into Google Cloud first._
 ./gradlew publish
 ```
 
-This will publish to a Maven Repository setup at
+This will publish distZips for all apps to a Maven repository at `gcs://gradle-build-analysis-apps/maven2`
 
 === Running applications in Google Cloud
 
