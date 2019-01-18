@@ -47,8 +47,10 @@ This app is not necessary right now. It streamed build events to Google Cloud Pu
 
 Currently the limiting factor is network outbound from the Gradle Enterprise server and multiple downloaders do not make processing faster.
 
+// TODO: index build, test and build-cache data
 // todo: collect raw events into day-segmented bucket keys
-// TODO: generate JSON and BigQuery models from POKOs
+// TODO: Check out Cloud Datalab for viz: https://cloud.google.com/datalab/
+// TODO: generate JSON and BigQuery models from POKOs: https://github.com/eonuora/bigquery-object-mapper/blob/master/src/main/java/com/ekene/bq/gcloud/BigQueryObjectMapper.java
 // TODO: dashboard application which hits BigQuery and produces slick charts
 // TODO: look into BigQueryML: https://cloud.google.com/bigquery/docs/bigqueryml-scientist-start and https://cloud.google.com/blog/products/gcp/preparing-and-curating-your-data-for-machine-learning
 
@@ -82,7 +84,7 @@ gcloud compute instances create build-event-collectorator1 \
    --scopes "userinfo-email,cloud-platform" \
    --metadata startup-script='#!/bin/sh
 APP_NAME="build-event-collectorator"
-APP_VERSION="0.3.0"
+APP_VERSION="0.3.4"
 export GRADLE_ENTERPRISE_HOSTNAME="gradle-enterprise.mycompany.com"
 export GRADLE_ENTERPRISE_USERNAME="my-username"
 export GRADLE_ENTERPRISE_PASSWORD="my-password"
