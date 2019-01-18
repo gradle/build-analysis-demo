@@ -1,0 +1,14 @@
+{"buildId":"225gftys3f2ko","pluginVersion":"1.6","gradleVersion":"3.3","timestamp":1547508669967}
+{"timestamp":1547508697997,"type":{"majorVersion":1,"minorVersion":0,"eventType":"BuildStarted"},"data":{}}
+{"timestamp":1547508697997,"type":{"majorVersion":1,"minorVersion":0,"eventType":"BuildRequestedTasks"},"data":{"requested":["somethingFunky"],"excluded":[]}}
+{"timestamp":1547508697997,"type":{"majorVersion":1,"minorVersion":1,"eventType":"BuildModes"},"data":{"refreshDependencies":false,"parallelProjectExecution":false,"rerunTasks":false,"continuous":false,"continueOnFailure":false,"configureOnDemand":false,"daemon":true,"offline":false,"dryRun":false,"maxWorkers":4,"taskOutputCache":false}}
+{"timestamp":1547508697997,"type":{"majorVersion":1,"minorVersion":0,"eventType":"ProjectStructure"},"data":{"rootProjectName":"buildship-test-project-with-build-scan","projects":[{"projectPath":":","children":[]}]}}
+{"timestamp":1547508697997,"type":{"majorVersion":1,"minorVersion":0,"eventType":"Hardware"},"data":{"numProcessors":4}}
+{"timestamp":1547508697997,"type":{"majorVersion":1,"minorVersion":0,"eventType":"Os"},"data":{"family":"windows","name":"Windows 7","version":"6.1","arch":"amd64"}}
+{"timestamp":1547508697997,"type":{"majorVersion":1,"minorVersion":0,"eventType":"Jvm"},"data":{"version":"1.8.0_161","vendor":"Oracle Corporation","runtimeName":"Java(TM) SE Runtime Environment","runtimeVersion":"1.8.0_161-b12","classVersion":"52.0","vmInfo":"mixed mode","vmName":"Java HotSpot(TM) 64-Bit Server VM","vmVersion":"25.161-b12","vmVendor":"Oracle Corporation"}}
+{"timestamp":1547508697997,"type":{"majorVersion":1,"minorVersion":0,"eventType":"JvmArgs"},"data":{"effective":["-Dfile.encoding=UTF8","-XX:MaxPermSize=256m","-XX:+HeapDumpOnOutOfMemoryError","-Xmx1024m","-Dfile.encoding=UTF-8","-Duser.country=US","-Duser.language=en","-Duser.variant"]}}
+{"timestamp":1547508697997,"type":{"majorVersion":1,"minorVersion":0,"eventType":"BuildAgent"},"data":{"username":"tcagent1","localHostname":"WINDOWS25","publicHostname":"windows25","ipAddresses":["192.168.0.159"]}}
+{"timestamp":1547508697997,"type":{"majorVersion":1,"minorVersion":0,"eventType":"DaemonState"},"data":{"startTime":1547508693865,"buildNumber":2,"numberOfRunningDaemons":1,"idleTimeout":10800000}}
+{"timestamp":1547508698110,"type":{"majorVersion":1,"minorVersion":2,"eventType":"TaskStarted"},"data":{"id":-3345665278235568197,"path":":somethingFunky","className":"org.gradle.api.DefaultTask_Decorated","thread":0,"noActions":false}}
+{"timestamp":1547508698118,"type":{"majorVersion":1,"minorVersion":3,"eventType":"TaskFinished"},"data":{"id":-3345665278235568197,"path":":somethingFunky","outcome":"success","skipMessage":null,"cacheable":false,"cachingDisabledReason":null,"cachingDisabledExplanation":null}}
+{"timestamp":1547508698127,"type":{"majorVersion":1,"minorVersion":0,"eventType":"BuildFinished"},"data":{"failure":null}}
