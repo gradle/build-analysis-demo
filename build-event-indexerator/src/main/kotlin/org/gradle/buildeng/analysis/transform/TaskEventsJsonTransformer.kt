@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
 import org.gradle.buildeng.analysis.common.DurationSerializer
 import org.gradle.buildeng.analysis.common.InstantSerializer
-import org.gradle.buildeng.analysis.model.Project
+import org.gradle.buildeng.analysis.model.BuildEvent
 import org.gradle.buildeng.analysis.model.Task
 import org.gradle.buildeng.analysis.model.TaskExecution
+import org.gradle.buildeng.analysis.model.TasksContainer
 import java.time.Duration
-import java.time.Instant
 
 /**
  * Transforms input of the following format to JSON that is BigQuery-compatible. See https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-json#limitations
@@ -85,35 +85,7 @@ class TaskEventsJsonTransformer {
             }
         }
 
-        val project = Project(rootProjectName, tasks.values.toList())
+        val project = TasksContainer(rootProjectName, tasks.values.toList())
         return objectWriter.writeValueAsString(objectMapper.convertValue(project, JsonNode::class.java))
-    }
-}
-
-data class BuildEvent(val type: BuildEventType, val timestamp: Instant, val data: JsonNode) {
-    companion object {
-        private val mapper = ObjectMapper()
-
-        fun fromJson(jsonNode: JsonNode): BuildEvent? {
-            if (!jsonNode.has("type")) {
-                println("WARNING: Expected BuildEvent but got ${mapper.writeValueAsString(jsonNode)}")
-                return null
-            }
-
-            return BuildEvent(
-                    BuildEventType.fromJson(mapper.convertValue(jsonNode.get("type"), JsonNode::class.java)),
-                    Instant.ofEpochMilli(jsonNode.get("timestamp").asLong()),
-                    mapper.convertValue(jsonNode.get("data"), JsonNode::class.java)
-            )
-        }
-    }
-}
-
-data class BuildEventType(val eventType: String, val majorVersion: Int, val minorVersion: Int) {
-    companion object {
-        fun fromJson(jsonNode: JsonNode) = BuildEventType(
-                jsonNode.get("eventType").asText(),
-                jsonNode.get("majorVersion").asInt(),
-                jsonNode.get("minorVersion").asInt())
     }
 }
