@@ -34,3 +34,18 @@ class DurationSerializer : JsonSerializer<Duration>() {
         return Duration::class.java
     }
 }
+
+class NullAvoidingStringSerializer : JsonSerializer<String>() {
+    @Throws(IOException::class)
+    override fun serialize(value: String, gen: JsonGenerator, serializers: SerializerProvider) {
+        if (value == "null") {
+            gen.writeString("")
+        } else {
+            gen.writeString(value)
+        }
+    }
+
+    override fun handledType(): Class<String> {
+        return String::class.java
+    }
+}

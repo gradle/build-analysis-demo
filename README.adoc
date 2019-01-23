@@ -34,7 +34,7 @@ Reference Materials:
  * link:https://docs.gradle.com/enterprise/export-api/[Gradle Enterprise Export API Manual]
  * link:https://cloud.google.com/storage/docs/uploading-objects#storage-upload-object-java[Google Cloud Storage docs]
 
-==== Build Event Transform apps
+==== Build Event Indexer apps
 These applications are responsible for transforming raw data and indexing in Google BigQuery.
 Each application consists of a `BuildTransformer` which filters and transforms the data and stores it, and a `BuildIndexer` which submits a job to index data using in BigQuery using a given schema (recommended) or auto-detected.
 
@@ -42,19 +42,48 @@ Reference Materials:
 
  * link:https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-json[Loading JSON data into BigQuery]
 
+// TODO: document running Dataflow jobs
+[listing]
+====
+./gradlew runJob --args="--runner=DirectRunner --project=build-analysis --output=gs://gradle-build-events/transformed"
+./gradlew :test-event-indexerator:runJob --args="--runner=DataflowRunner --project=build-analysis --output=build-analysis:gradle_builds.tests_20190116 --tempLocation=gs://gradle-build-events/tmp12"
+====
+
 ==== Build Producerator app
 This app is not necessary right now. It streamed build events to Google Cloud PubSub to allow fanout with many build event collectors.
 
 Currently the limiting factor is network outbound from the Gradle Enterprise server and multiple downloaders do not make processing faster.
 
-// TODO: index build, test and build-cache data
+// TODO: index exceptions
+// TODO: index build data with flags, and tags, and namevalues
+// TODO: regenerate tasks table with build_cache data
 // todo: collect raw events into day-segmented bucket keys
 // TODO: Check out Cloud Datalab for viz: https://cloud.google.com/datalab/
+// TODO: refactor indexing apps
+// TODO: maybe re-index tests data with local changes?
+// TODO: document indexing apps
 // TODO: generate JSON and BigQuery models from POKOs: https://github.com/eonuora/bigquery-object-mapper/blob/master/src/main/java/com/ekene/bq/gcloud/BigQueryObjectMapper.java
 // TODO: dashboard application which hits BigQuery and produces slick charts
-// TODO: look into BigQueryML: https://cloud.google.com/bigquery/docs/bigqueryml-scientist-start and https://cloud.google.com/blog/products/gcp/preparing-and-curating-your-data-for-machine-learning
+// TODO: example queries for
+// "How frequent does buildSrc compilation happen locally?"
+// "What’s the flakiness rate over all branches?"
+// "How many flaky tests are there per day/per week over all branches?"
+// "Did any tasks become slower over the course of the last weeks?"
+// "What is the average download speed from the remote cache? Are there some machines/times when it is slower?"
+// "how parallel does work happen inside a Gradle build?"
+// IDEA: GZoltar is looking into relating code changes to failures: http://www.gzoltar.com/publications.html
+// IDEA: look into BigQueryML for flaky test detection: https://cloud.google.com/bigquery/docs/bigqueryml-scientist-start and https://cloud.google.com/blog/products/gcp/preparing-and-curating-your-data-for-machine-learning
+// IDEA: calculate the cost of a given commit or PR
+// IDEA: can we find problematic areas of the codebase by looking at the build data?
+// IDEA: calculate the cost of changing a dependency
+// IDEA: Can we easily detect bad practices? Not using the Daemon or Cold Daemon. No build cache, etc?
 
 == Development
+
+=== Prerequisites
+
+ * Gradle Enterprise Export API access
+ * Google Cloud build-analysis project access
 
 === Google Cloud initial setup
 ```sh

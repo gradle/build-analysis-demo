@@ -3,7 +3,7 @@ package org.gradle.buildeng.analysis.model
 import java.time.Duration
 import java.time.Instant
 
-data class Project(
+data class TasksContainer(
         val rootProjectName: String,
         val tasks: List<Task>
 )

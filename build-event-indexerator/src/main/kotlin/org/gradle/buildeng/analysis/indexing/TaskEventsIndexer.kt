@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 
 
-object TaskEventsTransformer {
+object TaskEventsIndexer {
     @JvmStatic
     fun main(args: Array<String>) {
 
