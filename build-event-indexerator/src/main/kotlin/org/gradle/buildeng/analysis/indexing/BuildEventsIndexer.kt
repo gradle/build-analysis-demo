@@ -16,14 +16,14 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.KV
 import org.apache.beam.sdk.values.TypeDescriptors.kvs
 import org.apache.beam.sdk.values.TypeDescriptors.strings
-import org.gradle.buildeng.analysis.transform.TaskEventsJsonTransformer
+import org.gradle.buildeng.analysis.transform.BuildEventsJsonTransformer
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
 
 
-object TaskEventsIndexer {
+object BuildEventsIndexer {
     @JvmStatic
     fun main(args: Array<String>) {
 
@@ -31,19 +31,25 @@ object TaskEventsIndexer {
         fieldSchema.add(TableFieldSchema().setName("buildId").setType("STRING").setMode("REQUIRED"))
         fieldSchema.add(TableFieldSchema().setName("rootProjectName").setType("STRING").setMode("REQUIRED"))
         fieldSchema.add(TableFieldSchema().setName("buildAgentId").setType("STRING").setMode("REQUIRED"))
-        fieldSchema.add(TableFieldSchema().setName("tasks").setType("RECORD").setMode("REPEATED").setFields(listOf(
-                TableFieldSchema().setName("taskId").setType("STRING").setMode("REQUIRED"),
-                TableFieldSchema().setName("path").setType("STRING").setMode("REQUIRED"),
-                TableFieldSchema().setName("startTimestamp").setType("TIMESTAMP").setMode("REQUIRED"),
-                TableFieldSchema().setName("wallClockDuration").setType("INTEGER").setMode("NULLABLE"),
-                TableFieldSchema().setName("buildPath").setType("STRING").setMode("NULLABLE"),
-                TableFieldSchema().setName("className").setType("STRING").setMode("NULLABLE"),
-                TableFieldSchema().setName("outcome").setType("STRING").setMode("NULLABLE"),
-                TableFieldSchema().setName("cacheable").setType("BOOLEAN").setMode("NULLABLE"),
-                TableFieldSchema().setName("cachingDisabledReasonCategory").setType("STRING").setMode("NULLABLE"),
-                TableFieldSchema().setName("actionable").setType("BOOLEAN").setMode("NULLABLE"),
-                TableFieldSchema().setName("buildCacheInteractionIds").setType("STRING").setMode("REPEATED")
+        fieldSchema.add(TableFieldSchema().setName("buildRequestedTasks").setType("STRING").setMode("REPEATED"))
+        fieldSchema.add(TableFieldSchema().setName("buildExcludedTasks").setType("STRING").setMode("REPEATED"))
+        fieldSchema.add(TableFieldSchema().setName("environmentParameters").setType("RECORD").setMode("REPEATED").setFields(listOf(
+                TableFieldSchema().setName("key").setType("STRING").setMode("REQUIRED"),
+                TableFieldSchema().setName("value").setType("STRING").setMode("REQUIRED")
         )))
+        fieldSchema.add(TableFieldSchema().setName("startTimestamp").setType("TIMESTAMP").setMode("REQUIRED"))
+        fieldSchema.add(TableFieldSchema().setName("wallClockDuration").setType("INTEGER").setMode("REQUIRED"))
+        fieldSchema.add(TableFieldSchema().setName("failureId").setType("STRING").setMode("NULLABLE"))
+        fieldSchema.add(TableFieldSchema().setName("failed").setType("BOOLEAN").setMode("REQUIRED"))
+        fieldSchema.add(TableFieldSchema().setName("userLink").setType("RECORD").setMode("REPEATED").setFields(listOf(
+                TableFieldSchema().setName("label").setType("STRING").setMode("REQUIRED"),
+                TableFieldSchema().setName("url").setType("STRING").setMode("REQUIRED")
+        )))
+        fieldSchema.add(TableFieldSchema().setName("userNamedValue").setType("RECORD").setMode("REPEATED").setFields(listOf(
+                TableFieldSchema().setName("key").setType("STRING").setMode("REQUIRED"),
+                TableFieldSchema().setName("value").setType("STRING").setMode("REQUIRED")
+        )))
+        fieldSchema.add(TableFieldSchema().setName("userTag").setType("STRING").setMode("REPEATED"))
         val tableSchema = TableSchema()
         tableSchema.fields = fieldSchema
 
@@ -56,7 +62,7 @@ object TaskEventsIndexer {
                     KV.of(file.metadata.resourceId().toString(), file.readFullyAsUTF8String())
                 }))
                 .map {
-                    TaskEventsJsonTransformer().transform(it.value)
+                    BuildEventsJsonTransformer().transform(it.value)
                 }
                 .map {
                     convertJsonToTableRow(it)!!

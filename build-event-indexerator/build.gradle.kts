@@ -21,6 +21,17 @@ dependencies {
 
 tasks {
     // TODO: custom task type for Dataflow jobs
+    register<JavaExec>("indexBuildEvents") {
+        main = "org.gradle.buildeng.analysis.indexing.BuildEventsIndexer"
+        classpath = sourceSets["main"].runtimeClasspath
+
+        doFirst {
+            println("* main job class  : $main")
+            println("* pipeline options: \n${args?.joinToString("\n")}")
+        }
+        dependsOn("compileKotlin")
+    }
+
     register<JavaExec>("indexTaskEvents") {
         main = "org.gradle.buildeng.analysis.indexing.TaskEventsIndexer"
         classpath = sourceSets["main"].runtimeClasspath

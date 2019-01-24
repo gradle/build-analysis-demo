@@ -54,9 +54,7 @@ This app is not necessary right now. It streamed build events to Google Cloud Pu
 
 Currently the limiting factor is network outbound from the Gradle Enterprise server and multiple downloaders do not make processing faster.
 
-// TODO: index exceptions
-// TODO: index build data with flags, and tags, and namevalues
-// TODO: regenerate tasks table with build_cache data
+// TODO: collect dependency and plugin applications data
 // todo: collect raw events into day-segmented bucket keys
 // TODO: Check out Cloud Datalab for viz: https://cloud.google.com/datalab/
 // TODO: refactor indexing apps
@@ -65,6 +63,7 @@ Currently the limiting factor is network outbound from the Gradle Enterprise ser
 // TODO: generate JSON and BigQuery models from POKOs: https://github.com/eonuora/bigquery-object-mapper/blob/master/src/main/java/com/ekene/bq/gcloud/BigQueryObjectMapper.java
 // TODO: dashboard application which hits BigQuery and produces slick charts
 // TODO: example queries for
+// "What versions of library X are in use, how frequently, and (maybe) which projects?"
 // "How frequent does buildSrc compilation happen locally?"
 // "What’s the flakiness rate over all branches?"
 // "How many flaky tests are there per day/per week over all branches?"

@@ -17,14 +17,10 @@ class BigQueryBuildEventsJsonTransformerTest {
     }
 
     @Test fun testTransformEventsFile() {
-        val buildEventsFile = File(this::class.java.classLoader.getResource("f23vwoax6n4uy.out").file)
+        val buildEventsFile = File(this::class.java.classLoader.getResource("all-build-events-json.txt").file)
         val jsonNode = BigQueryBuildEventsJsonTransformer().transform(buildEventsFile)
 
         assertEquals("f23vwoax6n4uy", jsonNode.get("buildId").asText())
-
-//        jsonNode.find { node ->
-//            node.get("event").findPath("")
-//        }
 
         assertTrue(jsonNode.get("event").isArray)
         assertTrue(jsonNode.get("event").get(0).get("type").isObject)

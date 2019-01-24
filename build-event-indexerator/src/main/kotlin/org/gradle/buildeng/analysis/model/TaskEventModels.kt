@@ -3,22 +3,23 @@ package org.gradle.buildeng.analysis.model
 import java.time.Duration
 import java.time.Instant
 
-data class TasksContainer(
-        val rootProjectName: String,
-        val tasks: List<Task>
-)
-
-data class Task(
-        val buildPath: String,
-        val path: String,
-        val className: String,
-        val executions: List<TaskExecution>
+data class TaskExecutions(
+        val buildId: String,
+        var rootProjectName: String = "UNKNOWN_PROJECT",
+        var buildAgentId: String = "UNKNOWN_BUILD_AGENT",
+        val tasks: List<TaskExecution>
 )
 
 data class TaskExecution(
-        val buildId: String,
-        val buildAgentId: String,
+        val taskId: String,
+        val path: String,
         val startTimestamp: Instant,
-        val wallClockDuration: Duration,
-        val outcome: String
+        var wallClockDuration: Duration? = null,
+        var buildPath: String? = null,
+        var className: String? = null,
+        var outcome: String? = null,
+        var cacheable: Boolean? = null,
+        var cachingDisabledReasonCategory: String? = null,
+        var actionable: Boolean? = null,
+        val buildCacheInteractionIds: MutableList<String>
 )

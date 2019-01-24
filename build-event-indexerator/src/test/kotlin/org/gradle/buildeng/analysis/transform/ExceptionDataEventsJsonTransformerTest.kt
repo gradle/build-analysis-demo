@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 
 class ExceptionDataEventsJsonTransformerTest {
     @Test fun testTransformExceptionDataJson() {
-        val buildEventsFile = File(this::class.java.classLoader.getResource("cokuz2qlzlhck-build-events-json.txt").file)
+        val buildEventsFile = File(this::class.java.classLoader.getResource("failing-test-events-json.txt").file)
 
         val input = buildEventsFile.readText().split("\n").find { it.contains("ExceptionData") }!!
         val exceptionObjects = ExceptionDataEventsJsonTransformer().transform(input).map {
