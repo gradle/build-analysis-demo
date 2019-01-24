@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
 import org.gradle.buildeng.analysis.common.DurationSerializer
 import org.gradle.buildeng.analysis.common.InstantSerializer
+import org.gradle.buildeng.analysis.common.NullAvoidingStringSerializer
 import org.gradle.buildeng.analysis.model.BuildEvent
-import org.gradle.buildeng.analysis.model.Task
 import org.gradle.buildeng.analysis.model.TaskExecution
-import org.gradle.buildeng.analysis.model.TasksContainer
+import org.gradle.buildeng.analysis.model.TaskExecutions
 import java.time.Duration
 
 /**
@@ -25,6 +25,7 @@ class TaskEventsJsonTransformer {
             init {
                 addSerializer(InstantSerializer())
                 addSerializer(DurationSerializer())
+                addSerializer(NullAvoidingStringSerializer())
             }
         })
     }
@@ -39,53 +40,56 @@ class TaskEventsJsonTransformer {
 
         // Read first line, then everything else is events
         val header = objectReader.readTree(list.first())
-
-        var buildAgentId = "UNKNOWN_BUILD_AGENT_ID"
-        var rootProjectName = "UNKNOWN_ROOT_PROJECT"
         val buildId = header.get("buildId").asText()
+        val taskExecutions = TaskExecutions(buildId = buildId, tasks = listOf())
+        val tasks = mutableMapOf<String, TaskExecution>()
 
         val rawBuildEvents = list.drop(1)
-        val taskEvents = mutableListOf<BuildEvent>()
 
-        // TODO: make this prettier/more functional
         rawBuildEvents.filter { it.isNotEmpty() }.forEach {
             val buildEvent = BuildEvent.fromJson(objectReader.readTree(it))
             // Ignoring different build event versions here because every version has what we want
             when (buildEvent?.type?.eventType) {
-                "BuildAgent" -> buildAgentId = "${buildEvent.data.get("username").asText()}@${buildEvent.data.path("publicHostname").asText()}"
-                "ProjectStructure" -> rootProjectName = buildEvent.data.get("rootProjectName").asText()
-                "TaskStarted" -> taskEvents.add(buildEvent)
-                "TaskFinished" -> taskEvents.add(buildEvent)
-                // TODO: handle BuildCacheUnpackStarted, BuildCacheRemoteLoadStarted, BuildCachePackStarted/Finished
-            }
-        }
-
-        // Pair up task started and finished events by ID
-        val tasks = mutableMapOf<Long, Task>()
-        taskEvents.forEach { buildEvent ->
-            when (buildEvent.type.eventType) {
+                "BuildAgent" -> taskExecutions.buildAgentId = "${buildEvent.data.get("username").asText()}@${buildEvent.data.path("publicHostname").asText()}"
+                "ProjectStructure" -> {
+                    // This event is triggered for every included build, so is the only way to get root project
+                    if (buildEvent.data.path("projects").any { project -> project.path("buildPath").asText() == ":" }) {
+                        taskExecutions.rootProjectName = buildEvent.data.get("rootProjectName").asText()
+                    }
+                }
                 "TaskStarted" -> {
-                    // NOTE: using data.path(...) here to avoid NPEs caused by missing properties for old eventType versions
-                    val task = Task(
-                            buildEvent.data.path("buildPath").asText(),
-                            buildEvent.data.path("path").asText(),
-                            buildEvent.data.path("className").asText(),
-                            listOf(TaskExecution(buildId, buildAgentId, buildEvent.timestamp, Duration.ZERO, "UNKNOWN"))
+                    val taskId = buildEvent.data.get("id").asText()
+                    tasks[taskId] = TaskExecution(
+                            taskId = taskId,
+                            path = buildEvent.data.get("path").asText(),
+                            buildPath = buildEvent.data.path("buildPath").asText(),
+                            startTimestamp = buildEvent.timestamp,
+                            className = buildEvent.data.path("className").asText(),
+                            buildCacheInteractionIds = mutableListOf()
                     )
-                    tasks[buildEvent.data.get("id").asLong()] = task
                 }
                 "TaskFinished" -> {
-                    val buildEventId = buildEvent.data.get("id").asLong()
-                    val startedTask: Task = tasks[buildEventId]!!
-                    val duration = Duration.between(startedTask.executions.first().startTimestamp, buildEvent.timestamp)
-                    val taskExecution = startedTask.executions.first()
-                            .copy(wallClockDuration = duration, outcome = buildEvent.data.get("outcome").asText())
-                    tasks[buildEventId] = startedTask.copy(executions = listOf(taskExecution))
+                    tasks[buildEvent.data.get("id").asText()]!!.apply {
+                        this.wallClockDuration = Duration.between(tasks[taskId]!!.startTimestamp, buildEvent.timestamp)
+                        this.outcome = buildEvent.data.path("outcome").asText()
+                        this.cacheable = buildEvent.data.path("cacheable").asBoolean()
+                        this.cachingDisabledReasonCategory = buildEvent.data.path("cachingDisabledReasonCategory").asText()
+                        this.actionable = buildEvent.data.path("actionable").asBoolean()
+                    }
+                }
+                "BuildCachePackStarted", "BuildCacheUnpackStarted", "BuildCacheRemoteLoadStarted", "BuildCacheRemoteStoreStarted" -> {
+//                    val buildCacheInteraction = BuildCacheInteraction(
+//                            id = buildEvent.data.get("task").asText(),
+//                            type = buildEvent.type.eventType,
+//                            startTimestamp = buildEvent.timestamp,
+//                            cacheKey = buildEvent.data.path("cacheKey").asText()
+//                    )
+                    tasks[buildEvent.data.get("task").asText()]!!.buildCacheInteractionIds.add(buildEvent.data.get("id").asText())
                 }
             }
         }
 
-        val project = TasksContainer(rootProjectName, tasks.values.toList())
-        return objectWriter.writeValueAsString(objectMapper.convertValue(project, JsonNode::class.java))
+        val outputJson = objectMapper.convertValue(taskExecutions.copy(tasks = tasks.values.toList()), JsonNode::class.java)
+        return objectWriter.writeValueAsString(outputJson)
     }
 }

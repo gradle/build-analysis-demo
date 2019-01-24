@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 
 class TestEventsJsonTransformerTest {
     @Test fun testTransformFailingTestEvent() {
-        val buildEventsFile = File(this::class.java.classLoader.getResource("cokuz2qlzlhck-build-events-json.txt").file)
+        val buildEventsFile = File(this::class.java.classLoader.getResource("failing-test-events-json.txt").file)
         val jsonNode = ObjectMapper().readTree(TestEventsJsonTransformer().transform(buildEventsFile.readText()))
 
         assertEquals("build-analysis", jsonNode.get("rootProjectName").asText())
