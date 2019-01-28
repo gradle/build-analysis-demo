@@ -30,5 +30,6 @@ class BuildConsumerTest {
         val parsedJson = BuildConsumer(serverConnectionInfo).parse(sse)
 
         assertEquals("7ocipcgq42jds", parsedJson["buildId"].asText())
+        assertEquals(1544267050201, parsedJson["timestamp"].asLong())
     }
 }
