@@ -22,8 +22,6 @@ import rx.exceptions.Exceptions
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.time.Instant
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
 
 
@@ -49,7 +47,6 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
             "Repository", "ConfigurationResolutionData", "NetworkDownloadActivityStarted", "NetworkDownloadActivityFinished" // Network/repo Gradle-only
     ) // "OutputLogEvent", "OutputStyledTextEvent"
     private val storage: Storage = StorageOptions.getDefaultInstance().service
-    private val daySlashyFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
 
     fun consume(startEpoch: Long, gcsBucketName: String) {
         buildStream(startEpoch)
@@ -62,8 +59,7 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
                             .toList()
                             .map { serverSentEvents ->
                                 try {
-                                    val localDate = Instant.ofEpochMilli(timestamp).atZone(ZoneOffset.UTC).toLocalDate()
-                                    val blobKey = "${localDate.format(daySlashyFormat)}/$buildId-json.txt"
+                                    val blobKey = "$buildId-build-events-json.txt"
                                     val blobInfo = BlobInfo
                                             .newBuilder(BlobId.of(gcsBucketName, blobKey))
                                             .setContentType("text/plain")
