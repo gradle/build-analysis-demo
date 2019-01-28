@@ -22,27 +22,31 @@ import rx.exceptions.Exceptions
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
 
 
 class BuildConsumer(private val geServer: ServerConnectionInfo) {
     private val httpClient = HttpClient.newClient(geServer.socketAddress).unsafeSecure()
     private val objectMapper = ObjectMapper()
-    private val eventTypes = setOf("BuildStarted", "LoadBuildStarted", "LoadBuildFinished", "ProjectEvaluationStarted", "ProjectEvaluationFinished", "BuildRequestedTasks", "BuildModes", "DaemonState", "Hardware", "Os", "Jvm", "JvmArgs", "ProjectStructure", "BasicMemoryStats", "Locality", "Encoding", "ScopeIds", "FileRefRoots", "TaskStarted", "TaskFinished", "BuildCacheRemoteLoadStarted", "BuildCacheRemoteStoreStarted","BuildCacheRemoteStoreFinished", "BuildCachePackStarted", "BuildCachePackFinished", "BuildCacheUnpackStarted", "BuildCacheUnpackFinished", "BuildCacheRemoteLoadFinished", "TestStarted", "TestFinished", "BuildAgent", "ExceptionData", "BuildFinished", "UserTag", "UserLink", "UserNamedValue") // "OutputLogEvent", "OutputStyledTextEvent", "NetworkDownloadActivityStarted", "NetworkDownloadActivityFinished", "DependencyThingyyyyy?"
+    private val eventTypes = setOf("BuildStarted", "LoadBuildStarted", "LoadBuildFinished", "ProjectEvaluationStarted", "ProjectEvaluationFinished", "PluginApplicationStarted", "BuildRequestedTasks", "BuildModes", "DaemonState", "Hardware", "Os", "Jvm", "JvmArgs", "ProjectStructure", "BasicMemoryStats", "Locality", "Encoding", "ScopeIds", "FileRefRoots", "TaskStarted", "TaskFinished", "BuildCacheRemoteLoadStarted", "BuildCacheRemoteStoreStarted","BuildCacheRemoteStoreFinished", "BuildCachePackStarted", "BuildCachePackFinished", "BuildCacheUnpackStarted", "BuildCacheUnpackFinished", "BuildCacheRemoteLoadFinished", "TestStarted", "TestFinished", "BuildAgent", "ExceptionData", "BuildFinished", "UserTag", "UserLink", "UserNamedValue", "Repository", "ConfigurationResolutionData", "NetworkDownloadActivityStarted", "NetworkDownloadActivityFinished") // "OutputLogEvent", "OutputStyledTextEvent"
     private val storage: Storage = StorageOptions.getDefaultInstance().service
+    private val daySlashyFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
 
     fun consume(since: Instant, lastEventId: String?, gcsBucketName: String) {
         buildStream(since, lastEventId)
                 .doOnSubscribe({ println("Streaming builds from [${geServer.socketAddress.hostName}] to gs://$gcsBucketName/") })
                 .map({ serverSentEvent -> parse(serverSentEvent) })
-                .map({ json -> json["buildId"].asText() })
-                .flatMap({ buildId ->
+                .map({ json -> Pair(json["buildId"].asText(), json["timestamp"].asLong()) })
+                .flatMap({ (buildId, timestamp) ->
                     buildEventStream(buildId)
-                            .doOnSubscribe({ println("Streaming events for build $buildId ") })
+                            .doOnSubscribe({ println("Streaming events for build $buildId at $timestamp") })
                             .toList()
                             .map({ serverSentEvents ->
                                 try {
-                                    val blobKey = "$buildId-build-events-json.txt"
+                                    val localDate = Instant.ofEpochMilli(timestamp).atZone(ZoneOffset.UTC).toLocalDate()
+                                    val blobKey = "${localDate.format(daySlashyFormat)}/$buildId-json.txt"
                                     val blobInfo = BlobInfo
                                             .newBuilder(BlobId.of(gcsBucketName, blobKey))
                                             .setContentType("text/plain")
