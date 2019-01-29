@@ -36,14 +36,14 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
 
     fun consume(since: Instant, lastEventId: String?, gcsBucketName: String) {
         buildStream(since, lastEventId)
-                .doOnSubscribe({ println("Streaming builds from [${geServer.socketAddress.hostName}] to gs://$gcsBucketName/") })
-                .map({ serverSentEvent -> parse(serverSentEvent) })
-                .map({ json -> Pair(json["buildId"].asText(), json["timestamp"].asLong()) })
+                .doOnSubscribe { println("Streaming builds from [${geServer.socketAddress.hostName}] to gs://$gcsBucketName/") }
+                .map { serverSentEvent -> parse(serverSentEvent) }
+                .map { json -> Pair(json["buildId"].asText(), json["timestamp"].asLong()) }
                 .flatMap({ (buildId, timestamp) ->
                     buildEventStream(buildId)
-                            .doOnSubscribe({ println("Streaming events for build $buildId at $timestamp") })
+                            .doOnSubscribe { println("Streaming events for build $buildId at $timestamp") }
                             .toList()
-                            .map({ serverSentEvents ->
+                            .map { serverSentEvents ->
                                 try {
                                     val localDate = Instant.ofEpochMilli(timestamp).atZone(ZoneOffset.UTC).toLocalDate()
                                     val blobKey = "${localDate.format(daySlashyFormat)}/$buildId-json.txt"
@@ -57,7 +57,7 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
                                 } finally {
                                     serverSentEvents.forEach { assert(it.release()) }
                                 }
-                            })
+                            }
                 }, 20)
                 .toBlocking()
                 .subscribe()
@@ -116,9 +116,9 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
         }
 
         return request
-                .flatMap({ response -> getContentAsSse(response) })
-                .doOnNext({ serverSentEvent: ServerSentEvent -> eventId.set(serverSentEvent.eventIdAsString) })
-                .onErrorResumeNext({
+                .flatMap { response -> getContentAsSse(response) }
+                .doOnNext { serverSentEvent: ServerSentEvent -> eventId.set(serverSentEvent.eventIdAsString) }
+                .onErrorResumeNext {
                     println("Error: ${it.message} — ${it.cause}")
 
                     if (eventId.get() != null) {
@@ -128,7 +128,7 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
                         println("Error streaming $url: ${it.message}, resuming from null...")
                         resume(url, null)
                     }
-                })
+                }
     }
 
     private fun getContentAsSse(response: HttpClientResponse<ByteBuf>): ContentSource<ServerSentEvent> {
