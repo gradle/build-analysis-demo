@@ -4,8 +4,8 @@ plugins {
 
 dependencies {
     implementation(project(":analysis-common"))
-    implementation(kotlin("reflect", "1.3.11"))
-    implementation(kotlin("stdlib-jdk8", "1.3.11"))
+    implementation(kotlin("reflect", "1.3.20"))
+    implementation(kotlin("stdlib-jdk8", "1.3.20"))
 
     implementation("com.fasterxml.jackson.core:jackson-databind:2.8.2")
 
@@ -19,49 +19,34 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
+open class DataflowExec : JavaExec() {
+    override fun getClasspath(): FileCollection {
+        return sourceSets["main"].runtimeClasspath
+    }
+
+    @TaskAction
+    fun doExec() {
+        super.exec()
+
+        doFirst {
+            println("* main job class  : $main")
+            println("* pipeline options: \n${args?.joinToString("\n")}")
+        }
+        dependsOn("compileKotlin")
+    }
+}
+
 tasks {
-    // TODO: custom task type for Dataflow jobs
-    register<JavaExec>("indexBuildEvents") {
+    register<DataflowExec>("indexBuildEvents") {
         main = "org.gradle.buildeng.analysis.indexing.BuildEventsIndexer"
-        classpath = sourceSets["main"].runtimeClasspath
-
-        doFirst {
-            println("* main job class  : $main")
-            println("* pipeline options: \n${args?.joinToString("\n")}")
-        }
-        dependsOn("compileKotlin")
     }
-
-    register<JavaExec>("indexTaskEvents") {
+    register<DataflowExec>("indexTaskEvents") {
         main = "org.gradle.buildeng.analysis.indexing.TaskEventsIndexer"
-        classpath = sourceSets["main"].runtimeClasspath
-
-        doFirst {
-            println("* main job class  : $main")
-            println("* pipeline options: \n${args?.joinToString("\n")}")
-        }
-        dependsOn("compileKotlin")
     }
-
-    register<JavaExec>("indexTestEvents") {
+    register<DataflowExec>("indexTestEvents") {
         main = "org.gradle.buildeng.analysis.indexing.TestEventsIndexer"
-        classpath = sourceSets["main"].runtimeClasspath
-
-        doFirst {
-            println("* main job class  : $main")
-            println("* pipeline options: \n${args?.joinToString("\n")}")
-        }
-        dependsOn("compileKotlin")
     }
-
-    register<JavaExec>("indexExceptionEvents") {
+    register<DataflowExec>("indexExceptionEvents") {
         main = "org.gradle.buildeng.analysis.indexing.ExceptionEventsIndexer"
-        classpath = sourceSets["main"].runtimeClasspath
-
-        doFirst {
-            println("* main job class  : $main")
-            println("* pipeline options: \n${args?.joinToString("\n")}")
-        }
-        dependsOn("compileKotlin")
     }
 }
