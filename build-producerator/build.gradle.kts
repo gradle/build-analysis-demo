@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     implementation(project(":analysis-common"))
-    implementation(kotlin("stdlib", "1.3.11"))
+    implementation(kotlin("stdlib", "1.3.20"))
     implementation("io.netty:netty-codec-http:4.1.5.Final")
     implementation("io.reactivex:rxnetty-common:0.5.2")
     implementation("io.reactivex:rxnetty-http:0.5.2")
