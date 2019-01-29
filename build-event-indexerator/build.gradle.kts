@@ -4,8 +4,8 @@ plugins {
 
 dependencies {
     implementation(project(":analysis-common"))
-    implementation(kotlin("reflect", "1.3.11"))
-    implementation(kotlin("stdlib-jdk8", "1.3.11"))
+    implementation(kotlin("reflect", "1.3.20"))
+    implementation(kotlin("stdlib-jdk8", "1.3.20"))
 
     implementation("com.fasterxml.jackson.core:jackson-databind:2.8.2")
 
