@@ -1,7 +1,7 @@
 #!/bin/sh
 APP_NAME="build-event-indexerator"
 APP_VERSION="0.3.4"
-export GCS_RAW_BUCKET_NAME="gradle-task-test-cache-events-raw"
+export GCS_RAW_BUCKET_NAME="build-events-raw"
 export GCS_TRANSFORMED_BUCKET_NAME="gradle-task-test-cache-events"
 export BIGQUERY_DATASET_NAME="gradle_builds"
 export BIGQUERY_TABLE_NAME="builds_20190115"

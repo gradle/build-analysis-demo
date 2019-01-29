@@ -19,49 +19,30 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
+open class DataflowExec : JavaExec() {
+    @TaskAction
+    fun doExec() {
+        println("* main job class  : $main")
+        println("* pipeline options: \n${args?.joinToString("\n")}")
+        super.exec()
+    }
+}
+
 tasks {
-    // TODO: custom task type for Dataflow jobs
-    register<JavaExec>("indexBuildEvents") {
+    withType<DataflowExec>().configureEach {
+        classpath = project.the<SourceSetContainer>()["main"].runtimeClasspath
+        dependsOn("compileKotlin")
+    }
+    register<DataflowExec>("indexBuildEvents") {
         main = "org.gradle.buildeng.analysis.indexing.BuildEventsIndexer"
-        classpath = sourceSets["main"].runtimeClasspath
-
-        doFirst {
-            println("* main job class  : $main")
-            println("* pipeline options: \n${args?.joinToString("\n")}")
-        }
-        dependsOn("compileKotlin")
     }
-
-    register<JavaExec>("indexTaskEvents") {
+    register<DataflowExec>("indexTaskEvents") {
         main = "org.gradle.buildeng.analysis.indexing.TaskEventsIndexer"
-        classpath = sourceSets["main"].runtimeClasspath
-
-        doFirst {
-            println("* main job class  : $main")
-            println("* pipeline options: \n${args?.joinToString("\n")}")
-        }
-        dependsOn("compileKotlin")
     }
-
-    register<JavaExec>("indexTestEvents") {
+    register<DataflowExec>("indexTestEvents") {
         main = "org.gradle.buildeng.analysis.indexing.TestEventsIndexer"
-        classpath = sourceSets["main"].runtimeClasspath
-
-        doFirst {
-            println("* main job class  : $main")
-            println("* pipeline options: \n${args?.joinToString("\n")}")
-        }
-        dependsOn("compileKotlin")
     }
-
-    register<JavaExec>("indexExceptionEvents") {
+    register<DataflowExec>("indexExceptionEvents") {
         main = "org.gradle.buildeng.analysis.indexing.ExceptionEventsIndexer"
-        classpath = sourceSets["main"].runtimeClasspath
-
-        doFirst {
-            println("* main job class  : $main")
-            println("* pipeline options: \n${args?.joinToString("\n")}")
-        }
-        dependsOn("compileKotlin")
     }
 }

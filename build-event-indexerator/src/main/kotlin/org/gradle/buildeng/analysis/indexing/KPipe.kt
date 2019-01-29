@@ -2,6 +2,7 @@ package org.gradle.buildeng.analysis.indexing
 
 import com.google.api.services.bigquery.model.TableRow
 import com.google.api.services.bigquery.model.TableSchema
+import com.google.api.services.bigquery.model.TimePartitioning
 import org.apache.beam.sdk.Pipeline
 import org.apache.beam.sdk.coders.Coder
 import org.apache.beam.sdk.coders.NullableCoder
@@ -66,6 +67,7 @@ fun PCollection<TableRow>.toTable(
                     .withExtendedErrorInfo()
                     .withSchema(tableSchema)
                     .to(tableId)
+                    .withTimePartitioning(TimePartitioning())
                     .withCreateDisposition(BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED)
                     .withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_TRUNCATE))
 }
