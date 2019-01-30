@@ -60,14 +60,15 @@ fun PCollection<String>.toText(
 fun PCollection<TableRow>.toTable(
         name: String = "Write to BigQuery table",
         tableId: String,
-        tableSchema: TableSchema
+        tableSchema: TableSchema,
+        timePartitioning: TimePartitioning = TimePartitioning()
 ): WriteResult {
     return this.apply(name,
             BigQueryIO.writeTableRows()
                     .withExtendedErrorInfo()
                     .withSchema(tableSchema)
                     .to(tableId)
-                    .withTimePartitioning(TimePartitioning())
+                    .withTimePartitioning(timePartitioning)
                     .withCreateDisposition(BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED)
                     .withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_TRUNCATE))
 }
