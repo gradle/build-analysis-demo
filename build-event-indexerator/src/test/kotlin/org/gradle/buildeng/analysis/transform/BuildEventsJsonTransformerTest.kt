@@ -15,7 +15,7 @@ class BuildEventsJsonTransformerTest {
         assertEquals("gradle", jsonNode.get("rootProjectName").asText())
         assertEquals("f23vwoax6n4uy", jsonNode.get("buildId").asText())
         assertEquals("tcagent1@windows25", jsonNode.get("buildAgentId").asText())
-        assertEquals("2019-01-01 16:02:51.267-07:00", jsonNode.get("startTimestamp").asText())
+        assertEquals("2019-01-01 16:02:51.267-07:00", jsonNode.get("buildTimestamp").asText())
         assertEquals(15407, jsonNode.get("wallClockDuration").asInt())
         assertEquals("", jsonNode.get("failureId").asText())
         assertEquals(false, jsonNode.get("failed").asBoolean())
@@ -54,7 +54,7 @@ class BuildEventsJsonTransformerTest {
     "key" : "JvmArgs",
     "value" : "{\"effective\":[\"-XX:MaxMetaspaceSize=512m\",\"-XX:+HeapDumpOnOutOfMemoryError\",\"--add-opens=java.base/java.util=ALL-UNNAMED\",\"--add-opens=java.base/java.lang=ALL-UNNAMED\",\"--add-opens=java.base/java.lang.invoke=ALL-UNNAMED\",\"--add-opens=java.prefs/java.util.prefs=ALL-UNNAMED\",\"-Xmx2500m\",\"-Dfile.encoding=UTF-8\",\"-Djava.io.tmpdir=C:\\\\tcagent1\\\\temp\\\\buildTmp\",\"-Duser.country=US\",\"-Duser.language=en\",\"-Duser.variant\"]}"
   } ],
-  "startTimestamp" : "2019-01-01 16:02:51.267-07:00",
+  "buildTimestamp" : "2019-01-01 16:02:51.267-07:00",
   "wallClockDuration" : 15407,
   "failureId" : "",
   "failed" : false,

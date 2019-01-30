@@ -45,7 +45,7 @@ class BuildEventsJsonTransformer {
         var buildAgentId = "UNKNOWN_BUILD_AGENT_ID"
         var rootProjectName = "UNKNOWN_ROOT_PROJECT"
         val buildId = header.get("buildId").asText()
-        var buildStartTimestamp: Instant? = null
+        var buildStartTimestamp = Instant.ofEpochMilli(header.get("timestamp").asLong())
         var wallClockDuration: Duration? = null
         var failureId: String? = null
         var failed = false
@@ -69,7 +69,12 @@ class BuildEventsJsonTransformer {
                     failed = (failureId.isNullOrEmpty() || buildEvent.data.path("failure").asText().isNullOrEmpty())
                 }
                 "BuildAgent" -> buildAgentId = "${buildEvent.data.get("username").asText()}@${buildEvent.data.path("publicHostname").asText()}"
-                "ProjectStructure" -> rootProjectName = buildEvent.data.get("rootProjectName").asText()
+                "ProjectStructure" -> {
+                    // This event is triggered for every included build, so is the only way to get root project
+                    if (buildEvent.data.path("projects").any { project -> project.path("buildPath").asText() == ":" }) {
+                        rootProjectName = buildEvent.data.get("rootProjectName").asText()
+                    }
+                }
                 "BuildRequestedTasks" -> {
                     buildRequestedTasks.addAll(buildEvent.data.get("requested").map { arg -> arg.asText() })
                     buildExcludedTasks.addAll(buildEvent.data.get("excluded").map { arg -> arg.asText() })

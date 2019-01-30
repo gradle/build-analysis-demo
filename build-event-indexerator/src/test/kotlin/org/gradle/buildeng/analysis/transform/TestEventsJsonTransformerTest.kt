@@ -12,6 +12,8 @@ class TestEventsJsonTransformerTest {
         val jsonNode = ObjectMapper().readTree(TestEventsJsonTransformer().transform(buildEventsFile.readText()))
 
         assertEquals("build-analysis", jsonNode.get("rootProjectName").asText())
+        assertEquals("cokuz2qlzlhck", jsonNode.get("buildId").asText())
+        assertEquals("eric@kain.lan", jsonNode.get("buildAgentId").asText())
 
         assertTrue(jsonNode.get("tests").isArray)
         assertEquals(8, jsonNode.get("tests").size())
@@ -25,8 +27,6 @@ class TestEventsJsonTransformerTest {
         assertTrue(firstTest.get("executions").isArray)
         assertEquals(1, firstTest.get("executions").size())
 
-        assertEquals("cokuz2qlzlhck", firstTest.get("executions").get(0).get("buildId").asText())
-        assertEquals("eric@kain.lan", firstTest.get("executions").get(0).get("buildAgentId").asText())
         assertEquals("2019-01-11 12:07:32.982-07:00", firstTest.get("executions").get(0).get("startTimestamp").asText())
         assertEquals(36, firstTest.get("executions").get(0).get("wallClockDuration").asInt())
         assertEquals(false, firstTest.get("executions").get(0).get("skipped").asBoolean())
