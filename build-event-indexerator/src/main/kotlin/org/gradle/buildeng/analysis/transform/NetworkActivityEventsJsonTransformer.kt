@@ -1,0 +1,61 @@
+package org.gradle.buildeng.analysis.transform
+
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.module.SimpleModule
+import org.gradle.buildeng.analysis.common.DurationSerializer
+import org.gradle.buildeng.analysis.common.InstantSerializer
+import org.gradle.buildeng.analysis.common.NullAvoidingStringSerializer
+import org.gradle.buildeng.analysis.model.BuildEvent
+import org.gradle.buildeng.analysis.model.NetworkActivity
+import java.net.URL
+import java.time.Duration
+
+class NetworkActivityEventsJsonTransformer {
+    private val objectMapper = ObjectMapper()
+    private val objectReader = objectMapper.reader()
+    private val objectWriter = objectMapper.writer()
+
+    init {
+        objectMapper.registerModule(object : SimpleModule() {
+            init {
+                addSerializer(InstantSerializer())
+                addSerializer(DurationSerializer())
+                addSerializer(NullAvoidingStringSerializer())
+            }
+        })
+    }
+
+    fun transform(fileContents: String): List<String> {
+        val list = fileContents.split("\n")
+        // Read first line, then everything else is events
+        val header = objectReader.readTree(list.first())
+        val buildId = header.get("buildId").asText()
+
+        val networkActivities = mutableMapOf<String, NetworkActivity>()
+        list.drop(1).filter { it.isNotEmpty() }.forEach {
+            val buildEvent = BuildEvent.fromJson(objectReader.readTree(it))
+            when (buildEvent?.type?.eventType) {
+                "NetworkDownloadActivityStarted" -> {
+                    val id = buildEvent.data.get("id").asText()
+                    val url = URL(buildEvent.data.get("location").asText())
+                    val contentLength = buildEvent.data.get("contentLength").asLong()
+                    networkActivities[id] = NetworkActivity(buildId, id, url.host, url.path, contentLength, buildEvent.timestamp)
+                }
+                "NetworkDownloadActivityFinished" -> {
+                    val id = buildEvent.data.get("id").asText()
+                    val startedActivity = networkActivities[id]!!
+                    networkActivities[id] = startedActivity.copy(
+                            duration = Duration.between(startedActivity.startTimestamp, buildEvent.timestamp),
+                            failureId = buildEvent.data.path("failureId").asText(),
+                            failure = buildEvent.data.path("failure").asText()
+                    )
+                }
+            }
+        }
+
+        return networkActivities.map {
+            objectWriter.writeValueAsString(objectMapper.convertValue(it.value, JsonNode::class.java))
+        }
+    }
+}
