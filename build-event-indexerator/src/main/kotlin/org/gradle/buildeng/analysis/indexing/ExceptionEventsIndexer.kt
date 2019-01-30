@@ -18,7 +18,7 @@ object ExceptionEventsIndexer {
                 .filter { it.value.contains("\"eventType\":\"ExceptionData\"") }
                 .flatMap { ExceptionDataEventsJsonTransformer().transform(it.value) }
                 .map { convertJsonToTableRow(it)!! }
-                .toTable(tableId = options.output, tableSchema = tableSchema)
+                .toTable("Write to BigQuery", options.output, tableSchema)
 
         pipe.run().waitUntilFinish()
     }

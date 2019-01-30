@@ -5,6 +5,7 @@ import java.time.Instant
 
 data class TaskExecutions(
         val buildId: String,
+        val buildTimestamp: Instant,
         var rootProjectName: String = "UNKNOWN_PROJECT",
         var buildAgentId: String = "UNKNOWN_BUILD_AGENT",
         val tasks: List<TaskExecution>

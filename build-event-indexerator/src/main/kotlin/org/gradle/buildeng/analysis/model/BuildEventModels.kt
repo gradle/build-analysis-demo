@@ -10,7 +10,7 @@ data class Build(
         val buildRequestedTasks: List<String>,
         val buildExcludedTasks: List<String>,
         val environmentParameters: List<EnvironmentParameter>,
-        val startTimestamp: Instant,
+        val buildTimestamp: Instant,
         val wallClockDuration: Duration,
         val failureId: String?,
         val failed: Boolean,

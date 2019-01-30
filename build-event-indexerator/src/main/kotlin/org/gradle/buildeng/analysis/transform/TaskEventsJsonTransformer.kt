@@ -10,6 +10,7 @@ import org.gradle.buildeng.analysis.model.BuildEvent
 import org.gradle.buildeng.analysis.model.TaskExecution
 import org.gradle.buildeng.analysis.model.TaskExecutions
 import java.time.Duration
+import java.time.Instant
 
 /**
  * Transforms input of the following format to JSON that is BigQuery-compatible. See https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-json#limitations
@@ -41,7 +42,7 @@ class TaskEventsJsonTransformer {
         // Read first line, then everything else is events
         val header = objectReader.readTree(list.first())
         val buildId = header.get("buildId").asText()
-        val taskExecutions = TaskExecutions(buildId = buildId, tasks = listOf())
+        val taskExecutions = TaskExecutions(buildId = buildId, tasks = listOf(), buildTimestamp = Instant.ofEpochMilli(header.get("timestamp").asLong()))
         val tasks = mutableMapOf<String, TaskExecution>()
 
         val rawBuildEvents = list.drop(1)

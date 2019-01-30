@@ -5,6 +5,9 @@ import java.time.Instant
 
 data class TestsContainer(
         val rootProjectName: String,
+        val buildId: String,
+        val buildTimestamp: Instant,
+        val buildAgentId: String,
         val tests: List<Test>
 )
 
@@ -17,8 +20,6 @@ data class Test(
 )
 
 data class TestExecution(
-        val buildId: String,
-        val buildAgentId: String,
         val startTimestamp: Instant,
         val wallClockDuration: Duration,
         val skipped: Boolean,
