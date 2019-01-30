@@ -1,6 +1,5 @@
 package org.gradle.buildeng.analysis.model
 
-import java.time.Duration
 import java.time.Instant
 
 /**
@@ -13,10 +12,6 @@ import java.time.Instant
  *  and group = 'com.google.cloud'
  *  and module = 'google-cloud-core-http'
  *  and timestamp (in last 7 days)
- *
- * -- Did dependency resolution from Bintray get more reliable after Gradle 5.0? Did it get slower or faster?
- *
- * select
  */
 
 data class DependencyResolution(
@@ -37,5 +32,3 @@ data class ProjectDependency(val buildPath: String?, val projectPath: String)
 data class UnknownTypeDependency(val className: String?, val displayName: String?)
 
 data class Repository(val id: String, val name: String, val type: String, val properties: String?)
-
-data class NetworkActivity(val id: String, val location: String, val contentLength: Int, val startTimestamp: Instant, val duration: Duration, val failureId: String?, val failure: String?)

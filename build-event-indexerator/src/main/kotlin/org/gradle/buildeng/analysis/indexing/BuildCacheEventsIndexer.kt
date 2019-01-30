@@ -12,7 +12,7 @@ object BuildCacheEventsIndexer {
     fun main(args: Array<String>) {
         val tableSchema = TableSchema()
                 .setFields(BigQueryTableSchemaGenerator.generateFieldList(BuildCacheInteraction::class))
-        val timePartitioning = TimePartitioning()
+        val timePartitioning = TimePartitioning().setField(BuildCacheInteraction::startTimestamp.name)
 
         val (pipe, options) = KPipe.from<IndexingDataflowPipelineOptions>(args)
 

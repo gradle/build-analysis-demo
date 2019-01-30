@@ -36,7 +36,6 @@ class DependencyResolutionEventsJsonTransformer : EventsJsonTransformer() {
                 }
                 "ConfigurationResolutionData" -> {
                     // TODO: look up component matching identity ID and get repository ID from that
-                    // TODO: also relate to network activity
                     failureIds.addAll(buildEvent.data.path("failureIds").map { f -> f.asText() })
                     failures = buildEvent.data.path("failures").asText()
 
@@ -54,8 +53,6 @@ class DependencyResolutionEventsJsonTransformer : EventsJsonTransformer() {
                     }
                 }
 //                "Repository" -> {}
-//                "NetworkDownloadActivityStarted" -> {}
-//                "NetworkDownloadActivityFinished" -> {}
             }
         }
 
