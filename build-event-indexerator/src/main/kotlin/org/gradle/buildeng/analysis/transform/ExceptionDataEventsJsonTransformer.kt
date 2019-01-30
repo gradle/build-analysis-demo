@@ -9,9 +9,6 @@ import org.gradle.buildeng.analysis.model.ExceptionData
 import org.gradle.buildeng.analysis.model.StackFrame
 import org.gradle.buildeng.analysis.model.StackTrace
 
-/**
- * Transforms input of the following format to JSON that is BigQuery-compatible. See https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-json#limitations
- */
 class ExceptionDataEventsJsonTransformer {
 
     private val objectMapper = ObjectMapper()
