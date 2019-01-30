@@ -3,6 +3,8 @@ package org.gradle.buildeng.analysis.transform
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
+import org.gradle.buildeng.analysis.common.DurationSerializer
+import org.gradle.buildeng.analysis.common.InstantSerializer
 import org.gradle.buildeng.analysis.common.NullAvoidingStringSerializer
 import org.gradle.buildeng.analysis.model.BuildEvent
 import org.gradle.buildeng.analysis.model.ExceptionData
@@ -18,12 +20,15 @@ class ExceptionDataEventsJsonTransformer {
     init {
         objectMapper.registerModule(object : SimpleModule() {
             init {
+                addSerializer(InstantSerializer())
+                addSerializer(DurationSerializer())
                 addSerializer(NullAvoidingStringSerializer())
             }
         })
     }
 
     fun transform(input: String): List<String> {
+        // FIXME: seems like this won't work since this is now processing input from whole files...
         val buildEvent = BuildEvent.fromJson(objectReader.readTree(input))!!
         val stackTracesNode = buildEvent.data.get("stackTraces")
         val stackFramesNode = buildEvent.data.get("stackFrames")

@@ -1,6 +1,11 @@
 package org.gradle.buildeng.analysis.transform
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.module.SimpleModule
+import org.gradle.buildeng.analysis.common.DurationSerializer
+import org.gradle.buildeng.analysis.common.InstantSerializer
+import org.gradle.buildeng.analysis.common.NullAvoidingStringSerializer
 import org.gradle.buildeng.analysis.model.BuildCacheInteraction
 import org.gradle.buildeng.analysis.model.BuildEvent
 import java.time.Duration
@@ -8,16 +13,28 @@ import java.time.Duration
 /**
  * Transforms BuildEvent JSON into {@see BuildCacheInteraction}s.
  */
-class BuildCacheEventsJsonTransformer : EventsJsonTransformer() {
+class BuildCacheEventsJsonTransformer {
 
-    override fun transform(list: List<String>): String {
-        if (list.isEmpty()) {
-            throw IllegalArgumentException("Cannot transform empty input")
-        }
+    private val objectMapper = ObjectMapper()
+    private val objectReader = objectMapper.reader()
+    private val objectWriter = objectMapper.writer()
 
+    init {
+        objectMapper.registerModule(object : SimpleModule() {
+            init {
+                addSerializer(InstantSerializer())
+                addSerializer(DurationSerializer())
+                addSerializer(NullAvoidingStringSerializer())
+            }
+        })
+    }
+
+    fun transform(fileContents: String): List<String> {
         val buildCacheInteractions = mutableMapOf<String, BuildCacheInteraction>()
 
-        list.drop(1).filter { it.isNotEmpty() }.forEach {
+        // Drop header line
+        val list = fileContents.split("\n").drop(1)
+        list.filter { it.isNotEmpty() }.forEach {
             val buildEvent = BuildEvent.fromJson(objectReader.readTree(it))
             // Ignoring different build event versions here because every version has what we want
             when (buildEvent?.type?.eventType) {
@@ -25,7 +42,8 @@ class BuildCacheEventsJsonTransformer : EventsJsonTransformer() {
                     val id = buildEvent.data.get("id").asText()
                     val taskId = buildEvent.data.path("task").asText()
                     val cacheKey = buildEvent.data.path("cacheKey").asText()
-                    buildCacheInteractions[id] = BuildCacheInteraction(id, buildEvent.type.eventType, taskId, cacheKey, buildEvent.timestamp)
+                    val type = buildEvent.type.eventType.removeSuffix("Started")
+                    buildCacheInteractions[id] = BuildCacheInteraction(id, taskId, type, cacheKey, buildEvent.timestamp)
                 }
                 "BuildCachePackFinished", "BuildCacheUnpackFinished", "BuildCacheRemoteLoadFinished", "BuildCacheRemoteStoreFinished" -> {
                     val id = buildEvent.data.get("id").asText()
@@ -38,7 +56,8 @@ class BuildCacheEventsJsonTransformer : EventsJsonTransformer() {
             }
         }
 
-        val outputJson = objectMapper.convertValue(buildCacheInteractions, JsonNode::class.java)
-        return objectWriter.writeValueAsString(outputJson)
+        return buildCacheInteractions.map {
+            objectWriter.writeValueAsString(objectMapper.convertValue(it.value, JsonNode::class.java))
+        }
     }
 }
