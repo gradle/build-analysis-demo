@@ -36,6 +36,9 @@ tasks {
     register<DataflowExec>("indexBuildEvents") {
         main = "org.gradle.buildeng.analysis.indexing.BuildEventsIndexer"
     }
+    register<DataflowExec>("indexDependencyResolutionEvents") {
+        main = "org.gradle.buildeng.analysis.indexing.DependencyResolutionEventsIndexer"
+    }
     register<DataflowExec>("indexTaskEvents") {
         main = "org.gradle.buildeng.analysis.indexing.TaskEventsIndexer"
     }
