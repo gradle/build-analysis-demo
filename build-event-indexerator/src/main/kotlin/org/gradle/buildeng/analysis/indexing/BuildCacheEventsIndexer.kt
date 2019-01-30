@@ -12,12 +12,13 @@ object BuildCacheEventsIndexer {
     fun main(args: Array<String>) {
         val tableSchema = TableSchema()
                 .setFields(BigQueryTableSchemaGenerator.generateFieldList(BuildCacheInteraction::class))
-        val timePartitioning = TimePartitioning().setField("buildTimestamp")
+        val timePartitioning = TimePartitioning()
 
         val (pipe, options) = KPipe.from<IndexingDataflowPipelineOptions>(args)
 
         pipe.fromFiles(input = options.input)
-                .map { BuildCacheEventsJsonTransformer().transform(it.value) }
+                .filter { it.value.contains("\"eventType\":\"BuildCache") }
+                .flatMap { BuildCacheEventsJsonTransformer().transform(it.value) }
                 .map { convertJsonToTableRow(it)!! }
                 .toTable("Write to BigQuery", options.output, tableSchema, timePartitioning)
 
