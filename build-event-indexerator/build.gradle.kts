@@ -28,27 +28,16 @@ open class DataflowExec : JavaExec() {
     }
 }
 
-tasks {
-    withType<DataflowExec>().configureEach {
-        classpath = project.the<SourceSetContainer>()["main"].runtimeClasspath
-        dependsOn("compileKotlin")
-    }
-    register<DataflowExec>("indexBuildEvents") {
-        main = "org.gradle.buildeng.analysis.indexing.BuildEventsIndexer"
-    }
-    register<DataflowExec>("indexBuildCacheEvents") {
-        main = "org.gradle.buildeng.analysis.indexing.BuildCacheEventsIndexer"
-    }
-    register<DataflowExec>("indexDependencyResolutionEvents") {
-        main = "org.gradle.buildeng.analysis.indexing.DependencyResolutionEventsIndexer"
-    }
-    register<DataflowExec>("indexTaskEvents") {
-        main = "org.gradle.buildeng.analysis.indexing.TaskEventsIndexer"
-    }
-    register<DataflowExec>("indexTestEvents") {
-        main = "org.gradle.buildeng.analysis.indexing.TestEventsIndexer"
-    }
-    register<DataflowExec>("indexExceptionEvents") {
-        main = "org.gradle.buildeng.analysis.indexing.ExceptionEventsIndexer"
+// TODO: Create default args instead of specifying all on CLI
+// TODO: Different rules for different runners
+tasks.addRule("Pattern: index<EventType>Events") {
+    val taskName = this
+    if (startsWith("index") && endsWith("Events")) {
+        val eventTypes = taskName.removePrefix("index").removeSuffix("Events")
+        tasks.register(taskName, DataflowExec::class) {
+            main = "org.gradle.buildeng.analysis.indexing.${eventTypes}EventsIndexer"
+            classpath = project.the<SourceSetContainer>()["main"].runtimeClasspath
+            dependsOn("compileKotlin")
+        }
     }
 }

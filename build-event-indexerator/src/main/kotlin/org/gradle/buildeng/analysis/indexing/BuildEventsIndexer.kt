@@ -12,7 +12,7 @@ object BuildEventsIndexer {
     fun main(args: Array<String>) {
         val tableSchema = TableSchema()
                 .setFields(BigQueryTableSchemaGenerator.generateFieldList(Build::class))
-        val timePartitioning = TimePartitioning().setField("buildTimestamp")
+        val timePartitioning = TimePartitioning().setField(Build::buildTimestamp.name)
 
         val (pipe, options) = KPipe.from<IndexingDataflowPipelineOptions>(args)
 

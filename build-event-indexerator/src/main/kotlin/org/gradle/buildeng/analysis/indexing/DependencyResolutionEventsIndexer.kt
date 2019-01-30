@@ -12,7 +12,7 @@ object DependencyResolutionEventsIndexer {
     fun main(args: Array<String>) {
         val tableSchema = TableSchema()
                 .setFields(BigQueryTableSchemaGenerator.generateFieldList(DependencyResolution::class))
-        val timePartitioning = TimePartitioning().setField("buildTimestamp")
+        val timePartitioning = TimePartitioning().setField(DependencyResolution::buildTimestamp.name)
 
         val (pipe, options) = KPipe.from<IndexingDataflowPipelineOptions>(args)
 
