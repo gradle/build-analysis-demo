@@ -6,6 +6,8 @@ import java.time.Instant
 data class Build(
         val buildId: String,
         val rootProjectName: String,
+        val buildTool: String,
+        val buildToolVersion: String,
         val buildAgentId: String,
         val buildRequestedTasks: List<String>,
         val buildExcludedTasks: List<String>,

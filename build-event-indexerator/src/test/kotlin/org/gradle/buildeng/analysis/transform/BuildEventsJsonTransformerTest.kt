@@ -14,6 +14,7 @@ class BuildEventsJsonTransformerTest {
 
         assertEquals("gradle", jsonNode.get("rootProjectName").asText())
         assertEquals("f23vwoax6n4uy", jsonNode.get("buildId").asText())
+        assertEquals("5.1-rc-3", jsonNode.get("buildToolVersion").asText())
         assertEquals("tcagent1@windows25", jsonNode.get("buildAgentId").asText())
         assertEquals("2019-01-01 16:02:51.267-07:00", jsonNode.get("buildTimestamp").asText())
         assertEquals(15407, jsonNode.get("wallClockDuration").asInt())
@@ -32,6 +33,8 @@ class BuildEventsJsonTransformerTest {
     private val expectedOutput = """{
   "buildId" : "f23vwoax6n4uy",
   "rootProjectName" : "gradle",
+  "buildTool" : "Gradle",
+  "buildToolVersion" : "5.1-rc-3",
   "buildAgentId" : "tcagent1@windows25",
   "buildRequestedTasks" : [ "clean", "baseServicesGroovy:platformTest" ],
   "buildExcludedTasks" : [ ],

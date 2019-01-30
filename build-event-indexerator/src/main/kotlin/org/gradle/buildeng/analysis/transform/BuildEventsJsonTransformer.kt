@@ -45,6 +45,7 @@ class BuildEventsJsonTransformer {
         var buildAgentId = "UNKNOWN_BUILD_AGENT_ID"
         var rootProjectName = "UNKNOWN_ROOT_PROJECT"
         val buildId = header.get("buildId").asText()
+        val buildToolVersion = header.get("gradleVersion").asText()
         var buildStartTimestamp = Instant.ofEpochMilli(header.get("timestamp").asLong())
         var wallClockDuration: Duration? = null
         var failureId: String? = null
@@ -89,7 +90,7 @@ class BuildEventsJsonTransformer {
             }
         }
 
-        val build = Build(buildId, rootProjectName, buildAgentId, buildRequestedTasks, buildExcludedTasks, environmentParameters, buildStartTimestamp!!, wallClockDuration!!, failureId, failed, userLinks, userNamedValues, userTags)
+        val build = Build(buildId, rootProjectName, "Gradle", buildToolVersion, buildAgentId, buildRequestedTasks, buildExcludedTasks, environmentParameters, buildStartTimestamp!!, wallClockDuration!!, failureId, failed, userLinks, userNamedValues, userTags)
         return objectWriter.writeValueAsString(objectMapper.convertValue(build, JsonNode::class.java))
     }
 }
