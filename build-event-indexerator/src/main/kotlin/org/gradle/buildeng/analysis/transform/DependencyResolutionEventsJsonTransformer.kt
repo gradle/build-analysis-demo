@@ -1,39 +1,12 @@
 package org.gradle.buildeng.analysis.transform
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.module.SimpleModule
-import org.gradle.buildeng.analysis.common.DurationSerializer
-import org.gradle.buildeng.analysis.common.InstantSerializer
-import org.gradle.buildeng.analysis.common.NullAvoidingStringSerializer
 import org.gradle.buildeng.analysis.model.*
 import org.gradle.buildeng.analysis.model.BuildEvent
 import java.time.Instant
 
-/**
- * Transforms input of the following format to JSON that is BigQuery-compatible. See https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-json#limitations
- */
-class DependencyResolutionEventsJsonTransformer {
-
-    private val objectMapper = ObjectMapper()
-    private val objectReader = objectMapper.reader()
-    private val objectWriter = objectMapper.writer()
-
-    init {
-        objectMapper.registerModule(object : SimpleModule() {
-            init {
-                addSerializer(InstantSerializer())
-                addSerializer(DurationSerializer())
-                addSerializer(NullAvoidingStringSerializer())
-            }
-        })
-    }
-
-    fun transform(input: String): String {
-        return transform(input.split("\n"))
-    }
-
-    fun transform(list: List<String>): String {
+class DependencyResolutionEventsJsonTransformer : EventsJsonTransformer() {
+    override fun transform(list: List<String>): String {
         if (list.isEmpty()) {
             throw IllegalArgumentException("Cannot transform empty input")
         }
@@ -71,7 +44,7 @@ class DependencyResolutionEventsJsonTransformer {
                     val resolvedDependencyIds = buildEvent.data.get("dependencies").fields().asSequence().map { dependency -> dependency.value.get("to").asText() }
                     resolvedDependencyIds.forEach { id ->
                         val node = identities.get(id)
-                        when(node.get("type").asText()) {
+                        when (node.get("type").asText()) {
                             "ModuleComponentIdentity_1_0" -> moduleDependencies.add(ModuleDependency(node.path("group").asText(), node.path("module").asText(), node.path("version").asText()))
                             "ProjectComponentIdentity_1_0" -> projectDependencies.add(ProjectDependency(null, node.get("projectPath").asText()))
                             "ProjectComponentIdentity_1_1" -> projectDependencies.add(ProjectDependency(node.path("buildPath").asText(), node.get("projectPath").asText()))

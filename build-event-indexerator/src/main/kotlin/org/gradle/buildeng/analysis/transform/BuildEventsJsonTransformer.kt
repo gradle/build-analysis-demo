@@ -1,40 +1,13 @@
 package org.gradle.buildeng.analysis.transform
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.module.SimpleModule
-import org.gradle.buildeng.analysis.common.DurationSerializer
-import org.gradle.buildeng.analysis.common.InstantSerializer
-import org.gradle.buildeng.analysis.common.NullAvoidingStringSerializer
 import org.gradle.buildeng.analysis.model.*
 import org.gradle.buildeng.analysis.model.BuildEvent
 import java.time.Duration
 import java.time.Instant
 
-/**
- * Transforms input of the following format to JSON that is BigQuery-compatible. See https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-json#limitations
- */
-class BuildEventsJsonTransformer {
-
-    private val objectMapper = ObjectMapper()
-    private val objectReader = objectMapper.reader()
-    private val objectWriter = objectMapper.writer()
-
-    init {
-        objectMapper.registerModule(object : SimpleModule() {
-            init {
-                addSerializer(InstantSerializer())
-                addSerializer(DurationSerializer())
-                addSerializer(NullAvoidingStringSerializer())
-            }
-        })
-    }
-
-    fun transform(input: String): String {
-        return transform(input.split("\n"))
-    }
-
-    fun transform(list: List<String>): String {
+class BuildEventsJsonTransformer : EventsJsonTransformer() {
+    override fun transform(list: List<String>): String {
         if (list.isEmpty()) {
             throw IllegalArgumentException("Cannot transform empty input")
         }
