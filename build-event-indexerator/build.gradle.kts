@@ -19,24 +19,18 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
-open class DataflowExec : JavaExec() {
-    @TaskAction
-    fun doExec() {
-        println("* main job class  : $main")
-        println("* pipeline options: \n${args?.joinToString("\n")}")
-        super.exec()
-    }
-}
-
-// TODO: Create default args instead of specifying all on CLI
-// TODO: Different rules for different runners
 tasks.addRule("Pattern: index<EventType>Events") {
     val taskName = this
     if (startsWith("index") && endsWith("Events")) {
         val eventTypes = taskName.removePrefix("index").removeSuffix("Events")
-        tasks.register(taskName, DataflowExec::class) {
+        tasks.register(taskName, JavaExec::class) {
+            doFirst {
+                println("* main job class  : $main")
+                println("* pipeline options: \n${args?.joinToString("\n")}")
+            }
             main = "org.gradle.buildeng.analysis.indexing.${eventTypes}EventsIndexer"
             classpath = project.the<SourceSetContainer>()["main"].runtimeClasspath
+
             dependsOn("compileKotlin")
         }
     }
