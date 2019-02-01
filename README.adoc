@@ -25,7 +25,7 @@ Some fields are JSON. See link:https://cloud.google.com/bigquery/docs/reference/
 
 == Project structure
 
-==== Build Event Collector app
+=== Build Event Collector app
 This application is responsible for streaming build event data from a configured Gradle Enterprise export API endpoint into a specified Google Cloud Storage bucket.
 It pulls all builds down and all configured event types, avoiding as much data interaction (parsing, filtering) as possible.
 
@@ -34,89 +34,21 @@ Reference Materials:
  * link:https://docs.gradle.com/enterprise/export-api/[Gradle Enterprise Export API Manual]
  * link:https://cloud.google.com/storage/docs/uploading-objects#storage-upload-object-java[Google Cloud Storage docs]
 
-==== Build Event Indexer apps
-These applications are responsible for transforming raw data and indexing in Google BigQuery.
-Each application consists of a `BuildTransformer` which filters and transforms the data and stores it, and a `BuildIndexer` which submits a job to index data using in BigQuery using a given schema (recommended) or auto-detected.
-
-Reference Materials:
-
- * link:https://cloud.google.com/bigquery/docs/loading-data-cloud-storage-json[Loading JSON data into BigQuery]
-
-// TODO: document running Dataflow jobs
-[listing]
-====
-./gradlew runJob --args="--runner=DirectRunner --project=build-analysis --output=gs://gradle-build-events/transformed"
-./gradlew :test-event-indexerator:runJob --args="--runner=DataflowRunner --project=build-analysis --output=build-analysis:gradle_builds.tests_20190116 --tempLocation=gs://gradle-build-events/tmp12"
-====
-
-==== Build Producerator app
-This app is not necessary right now. It streamed build events to Google Cloud PubSub to allow fanout with many build event collectors.
-
-Currently the limiting factor is network outbound from the Gradle Enterprise server and multiple downloaders do not make processing faster.
-
-// TODO: collect dependency and plugin applications data
-// todo: collect raw events into day-segmented bucket keys
-// TODO: Check out Cloud Datalab for viz: https://cloud.google.com/datalab/
-// TODO: refactor indexing apps
-// TODO: maybe re-index tests data with local changes?
-// TODO: document indexing apps
-// TODO: generate JSON and BigQuery models from POKOs: https://github.com/eonuora/bigquery-object-mapper/blob/master/src/main/java/com/ekene/bq/gcloud/BigQueryObjectMapper.java
-// TODO: dashboard application which hits BigQuery and produces slick charts
-// TODO: example queries for
-// "What versions of library X are in use, how frequently, and (maybe) which projects?"
-// "How frequent does buildSrc compilation happen locally?"
-// "What’s the flakiness rate over all branches?"
-// "How many flaky tests are there per day/per week over all branches?"
-// "Did any tasks become slower over the course of the last weeks?"
-// "What is the average download speed from the remote cache? Are there some machines/times when it is slower?"
-// "how parallel does work happen inside a Gradle build?"
-// IDEA: GZoltar is looking into relating code changes to failures: http://www.gzoltar.com/publications.html
-// IDEA: look into BigQueryML for flaky test detection: https://cloud.google.com/bigquery/docs/bigqueryml-scientist-start and https://cloud.google.com/blog/products/gcp/preparing-and-curating-your-data-for-machine-learning
-// IDEA: calculate the cost of a given commit or PR
-// IDEA: can we find problematic areas of the codebase by looking at the build data?
-// IDEA: calculate the cost of changing a dependency
-// IDEA: Can we easily detect bad practices? Not using the Daemon or Cold Daemon. No build cache, etc?
-
-== Development
-
-=== Prerequisites
-
- * Gradle Enterprise Export API access
- * Google Cloud build-analysis project access
-
-=== Google Cloud initial setup
-```sh
-gcloud config set compute/zone us-central1-f
-gcloud config set compute/region us-central1
-```
-
-=== Publishing to Google Cloud
-
-_NOTE: Make sure you're logged into Google Cloud first._
-
-```sh
-./gradlew publish
-```
-
-This will publish distZips for all apps to a Maven repository at `gcs://gradle-build-analysis-apps/maven2`
-
-=== Running applications in Google Cloud
-
 ==== Running Build Event Collector
 ```sh
 gcloud compute instances create build-event-collectorator1 \
    --preemptible \
    --image-family debian-9 \
    --image-project debian-cloud \
-   --machine-type n1-standard-8 \
+   --machine-type n1-highmem-8 \
    --scopes "userinfo-email,cloud-platform" \
    --metadata startup-script='#!/bin/sh
 APP_NAME="build-event-collectorator"
-APP_VERSION="0.3.4"
+APP_VERSION="0.4.1"
 export GRADLE_ENTERPRISE_HOSTNAME="gradle-enterprise.mycompany.com"
 export GRADLE_ENTERPRISE_USERNAME="my-username"
 export GRADLE_ENTERPRISE_PASSWORD="my-password"
-export GCS_RAW_BUCKET_NAME="gradle-task-test-cache-events-raw"
+export GCS_RAW_BUCKET_NAME="build-events-raw"
 gsutil cp "gs://gradle-build-analysis-apps/maven2/org/gradle/buildeng/analysis/${APP_NAME}/${APP_VERSION}/${APP_NAME}-${APP_VERSION}.zip" .
 apt-get update && apt-get -y --force-yes install openjdk-8-jdk unzip
 update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
@@ -130,32 +62,193 @@ By default the collector processes only builds from the moment the app is starte
 
 Similarly, you can specify a `export LAST_BUILD_ID="jh4qknspatp2y"` to start streaming from the build _immediately after_ the given build ID.
 
-==== Running a Build Event Indexer
-
-```sh
-gcloud compute instances create build-event-indexerator1 \
-   --preemptible \
-   --image-family debian-9 \
-   --image-project debian-cloud \
-   --machine-type n1-standard-4 \
-   --scopes "userinfo-email,cloud-platform" \
-   --metadata startup-script='#!/bin/sh
-APP_NAME="build-event-indexerator"
-APP_VERSION="0.2.0"
-export GCS_RAW_BUCKET_NAME="gradle-task-test-cache-events-raw"
-export GCS_TRANSFORMED_BUCKET_NAME="gradle-task-test-cache-events"
-export BIGQUERY_DATASET_NAME="gradle_builds"
-export BIGQUERY_TABLE_NAME="builds_20190115"
-gsutil cp "gs://gradle-build-analysis-apps/maven2/org/gradle/buildeng/analysis/${APP_NAME}/${APP_VERSION}/${APP_NAME}-${APP_VERSION}.zip" .
-apt-get update && apt-get -y --force-yes install openjdk-8-jdk unzip
-update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-echo "Running ${APP_NAME}-${APP_VERSION}..."
-unzip "${APP_NAME}-${APP_VERSION}.zip"
-sh "${APP_NAME}-${APP_VERSION}/bin/${APP_NAME}"
-echo "Application exited"'
-```
-
 ==== Getting logs for a given instance
 ```sh
 gcloud compute instances get-serial-port-output build-event-collectorator1
 ```
+
+=== Build Producerator app
+This app is not necessary right now. It streamed build events to Google Cloud PubSub to allow fanout with many build event collectors.
+
+Currently the limiting factor is network outbound from the Gradle Enterprise server and multiple downloaders do not make processing faster.
+
+=== Build Event Indexer apps
+These applications are responsible for transforming raw data and indexing in Google BigQuery.
+Each application consists of a `EventModel` that represents the schema of the BigQuery table to be generated, an `EventJsonTransformer` which filters and transforms data, and a `BuildIndexer` which writes to BigQuery.
+
+You can develop your own indexer by creating a Model, EventsJsonTransformer, and an Indexer.
+You will find several indexers for inspiration under `build-event-indexerator/src/main/kotlin`.
+
+[NOTE]
+====
+We are using FileIO here to read whole files and filter lines rather than reading using TextIO because using TextIO encounters an Error:
+       "Total size of the BoundedSource objects generated by split() operation is larger than the allowable limit."
+       See link:https://cloud.google.com/dataflow/docs/guides/troubleshooting-your-pipeline#total_number_of_boundedsource_objects_generated_by_splitintobundles_operation_is_larger_than_the_allowable_limit_or_total_size_of_the_boundedsource_objects_generated_by_splitintobundles_operation_is_larger_than_the_allowable_limit[more information].
+====
+
+You can run any indexer locally using a task rule and the `DirectRunner`:
+
+[listing]
+====
+./gradlew :build-event-indexerator:indexBuildEvents --args="--runner=DirectRunner --project=build-analysis --input=gs://build-events-raw/2019/01/01/22*.txt --output=build-analysis:gradle_builds.builds"
+====
+
+Once you're happy with your Apache Beam setup, create a Google Dataflow job to run over a larger input.
+
+[listing]
+====
+./gradlew :build-event-indexerator:indexTestEvents --args="--runner=DataflowRunner --project=build-analysis --input=gs://build-events-raw/2019/01/** --output=build-analysis:gradle_builds.test_executions --region=us-central1 --tempLocation=gs://gradle-dataflow-tmp/$(openssl rand -hex 8)"
+====
+
+Let's break this down a bit:
+
+ - `--runner=DataflowRunner` tells Apache Beam that you want to use link:https://console.cloud.google.com/dataflow?project=build-analysis[Google Dataflow] which uses Google Compute Engine under the hood.
+ - `--project=build-analysis` configures the Google Cloud project name. We use `build-analysis`.
+ - `--input=gs://build-events-raw/2019/01/**` will consume all files from the given link:https://console.cloud.google.com/storage/browser?project=build-analysis[Google Cloud Storage] bucket in the month of January 2019. These build files are keyed by build start time.
+ - `--output=build-analysis:gradle_builds.my_builds_table` is the BigQuery table that will be created (if necessary) or appended to.
+ - `--region=us-central1` Google Compute region to use for workers. Quotas are set by region, and we have requested increased capacity so that Dataflow can process TBs of build data before Eric dies of old age. This is optional and us-central1 is the default.
+ - `--tempLocation=gs://gradle-dataflow-tmp/$(openssl rand -hex 8)` an existing GCS bucket and a random key that Dataflow jobs can use to store temporary files.
+
+// TODO: index plugin applications data
+// TODO: schedule daily collector job. See https://cloud.google.com/scheduler/docs/scheduling-instances-with-cloud-scheduler
+// TODO: dashboard application which hits BigQuery and produces slick charts
+
+// TODO: Refactoring
+// convert collector to Ratpack and enable compression
+// Refactor common stuff out of json transformers
+
+// TODO: improve indexes
+// Index commit data from user tags into builds/tests/error tables
+// maybe re-index tests data with local changes?
+
+// TODO: dashboarding
+// Check out Cloud Datalab for viz: https://cloud.google.com/datalab/
+
+// TODO: documentation
+// document running Dataflow jobs
+// Document example queries for
+// Blog about all this stuff https://github.com/gradle/blog/issues/136
+// "What versions of library X are in use, how frequently, and (maybe) which projects?"
+// "What’s the flakiness rate over all branches?"
+// "How many flaky tests are there per day/per week over all branches?"
+// "Did any tasks become slower over the course of the last weeks?"
+// "What is the average download speed from the remote cache? Are there some machines/times when it is slower?"
+// "how parallel does work happen inside a Gradle build?"
+
+// IDEA: GZoltar is looking into relating code changes to failures: http://www.gzoltar.com/publications.html
+// IDEA: look into BigQueryML for flaky test detection: https://cloud.google.com/bigquery/docs/bigqueryml-scientist-start and https://cloud.google.com/blog/products/gcp/preparing-and-curating-your-data-for-machine-learning
+// IDEA: Can we follow a given PR/commit through the CI pipeline? Can we calculate the cost of a given commit or PR?
+// IDEA: can we find problematic areas of the codebase by looking at the build data?
+// IDEA: calculate the cost of changing a dependency
+// IDEA: can we find unnecessary dependencies? Those that are not actually used by the project.
+
+==== Problems we want to catch quickly
+
+* Task has gotten X% and at least Y seconds slower
+* Build cache effectiveness goes down by X%
+
+==== Activity we want to monitor
+
+* Number of builds (local and CI)
+* Number of build failures
+* Flaky failures
+* Where code is changing recently
+* Build cache efficiency
+* Can we sessionize builds/commits/events in order to understand workflow?
+
+==== Common ad-hoc queries we want to make
+
+* What versions of library X are in use by frequency?
+* How frequent does buildSrc compilation happen locally?
+
+```sql
+SELECT
+  tasks.buildPath,
+  tasks.outcome,
+  count(buildId) as local_count
+FROM
+  `gradle_builds.tasks_2019116`,
+  UNNEST(tasks) AS tasks
+WHERE
+  rootProjectName = 'gradle'
+  AND buildAgentId NOT LIKE 'tcagent%'
+  and tasks.buildPath like ':buildSrc'
+GROUP BY
+  1, 2
+ORDER BY
+  3 DESC;
+```
+
+* What versions of Gradle are in use recently?
+
+```
+SELECT
+  buildToolVersion,
+  COUNT(buildId) as count
+FROM
+  `gradle_builds.builds`
+WHERE
+  rootProjectName = 'gradle'
+  and buildTimestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
+GROUP BY
+  1
+ORDER BY
+  2 DESC;
+```
+
+* Is anyone building locally on Windows?
+* How much memory are folks using to build this project? CPUs?
+
+* Is any local build still using Java 7?
+
+```
+SELECT
+  JSON_EXTRACT(env.value,
+    '$.version') as jdk_version,
+  COUNT(env.value) as count
+FROM
+  `gradle_builds.builds`,
+  UNNEST(environmentParameters) AS env
+WHERE
+  buildAgentId NOT LIKE 'tcagent%'
+  AND rootProjectName = 'gradle'
+  AND env.key LIKE 'Jvm'
+  AND buildTimestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
+GROUP BY
+  1
+ORDER BY
+  2 DESC;
+```
+
+* Which Gradle features are everyone using? Is everyone using the Daemon?
+* Given a task, tell me the cache rate, mean/stddev/histogram, inputs, network, etc. How has this changed over time?
+* What are the costliest errors (again, time x frequency) and build failures, segmented by environment and failure type?
+* What is the impact of flaky test failures on local builds?
+
+==== Micro build analysis data applications
+
+* Given an error, have we seen it before?
+* How does this build differ from the norm: performance? network? switches?
+
+== Development
+
+=== Prerequisites
+
+ * Gradle Enterprise Export API access
+ * Google Cloud build-analysis project access
+ * JDK 8 installed
+
+=== Google Cloud initial setup
+```sh
+gcloud config set compute/region us-central1
+```
+
+=== Publishing to Google Cloud
+
+_NOTE: Make sure you're using JDK8 and logged into Google Cloud first._
+
+```sh
+./gradlew publish
+```
+
+This will publish distZips for all apps to a Maven repository at `gcs://gradle-build-analysis-apps/maven2`
