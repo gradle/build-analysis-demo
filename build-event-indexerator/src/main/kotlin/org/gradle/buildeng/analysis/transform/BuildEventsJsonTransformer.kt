@@ -7,7 +7,11 @@ import java.time.Duration
 import java.time.Instant
 
 class BuildEventsJsonTransformer : EventsJsonTransformer() {
-    override fun transform(list: List<String>): String {
+    fun transform(input: String): String {
+        return transform(input.split("\n"))
+    }
+
+    fun transform(list: List<String>): String {
         if (list.isEmpty()) {
             throw IllegalArgumentException("Cannot transform empty input")
         }
@@ -21,7 +25,7 @@ class BuildEventsJsonTransformer : EventsJsonTransformer() {
         val buildToolVersion = header.get("gradleVersion").asText()
         var buildStartTimestamp = Instant.ofEpochMilli(header.get("timestamp").asLong())
         var wallClockDuration: Duration? = null
-        var failureId: String? = null
+        var failureId = ""
         var failed = false
 
         val rawBuildEvents = list.drop(1)
@@ -35,12 +39,12 @@ class BuildEventsJsonTransformer : EventsJsonTransformer() {
         rawBuildEvents.filter { it.isNotEmpty() }.forEach {
             val buildEvent = BuildEvent.fromJson(objectReader.readTree(it))
             when (buildEvent?.type?.eventType) {
-                // TODO: understand the difference between this and the timestamp in the header
+                // NOTE: header (build) timestamp represents when build scan was received, so make sure we use buildStart timestamp to measure build duration
                 "BuildStarted" -> buildStartTimestamp = buildEvent.timestamp
                 "BuildFinished" -> {
                     wallClockDuration = Duration.between(buildStartTimestamp!!, buildEvent.timestamp)
                     failureId = buildEvent.data.path("failureId").asText()
-                    failed = (failureId.isNullOrEmpty() || buildEvent.data.path("failure").asText().isNullOrEmpty())
+                    failed = !buildEvent.data.path("failureId").isNull
                 }
                 "BuildAgent" -> buildAgentId = "${buildEvent.data.get("username").asText()}@${buildEvent.data.path("publicHostname").asText()}"
                 "ProjectStructure" -> {

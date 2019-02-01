@@ -9,7 +9,8 @@ import java.time.Instant
 
 class TaskEventsJsonTransformer : EventsJsonTransformer() {
 
-    override fun transform(list: List<String>): String {
+    fun transform(fileContents: String): String {
+        val list = fileContents.split("\n")
         if (list.isEmpty()) {
             throw IllegalArgumentException("Cannot transform empty input")
         }
@@ -54,12 +55,6 @@ class TaskEventsJsonTransformer : EventsJsonTransformer() {
                     }
                 }
                 "BuildCachePackStarted", "BuildCacheUnpackStarted", "BuildCacheRemoteLoadStarted", "BuildCacheRemoteStoreStarted" -> {
-//                    val buildCacheInteraction = BuildCacheInteraction(
-//                            id = buildEvent.data.get("task").asText(),
-//                            type = buildEvent.type.eventType,
-//                            startTimestamp = buildEvent.timestamp,
-//                            cacheKey = buildEvent.data.path("cacheKey").asText()
-//                    )
                     tasks[buildEvent.data.get("task").asText()]!!.buildCacheInteractionIds.add(buildEvent.data.get("id").asText())
                 }
             }
