@@ -18,6 +18,7 @@ class DependencyResolutionEventsJsonTransformerTest {
         assertEquals(67, jsonNode.get("moduleDependencies").size())
         assertEquals(1, jsonNode.get("projectDependencies").size())
         assertEquals(0, jsonNode.get("unknownTypeDependencies").size())
+        assertEquals(3, jsonNode.get("repositories").size())
         assertEquals(0, jsonNode.get("failureIds").size())
         assertEquals("", jsonNode.get("failures").asText())
 
@@ -302,6 +303,22 @@ class DependencyResolutionEventsJsonTransformerTest {
     "projectPath" : ":analysis-common"
   } ],
   "unknownTypeDependencies" : [ ],
+  "repositories" : [ {
+    "id" : "2312845989419396805",
+    "name" : "maven",
+    "type" : "MAVEN",
+    "properties" : "{\"URL\":\"https://maven-central.storage.googleapis.com\",\"ARTIFACT_URLS\":[],\"AUTHENTICATED\":false,\"METADATA_SOURCES\":[\"mavenPom\",\"artifact\"],\"AUTHENTICATION_SCHEMES\":[]}"
+  }, {
+    "id" : "-1580266721305533123",
+    "name" : "BintrayJCenter",
+    "type" : "MAVEN",
+    "properties" : "{\"URL\":\"https://jcenter.bintray.com/\",\"ARTIFACT_URLS\":[],\"AUTHENTICATED\":false,\"METADATA_SOURCES\":[\"mavenPom\",\"artifact\"],\"AUTHENTICATION_SCHEMES\":[]}"
+  }, {
+    "id" : "5335791236645149605",
+    "name" : "Embedded Kotlin Repository",
+    "type" : "MAVEN",
+    "properties" : "{\"URL\":{\"path\":\"caches/5.1.1/embedded-kotlin-repo-1.3.11-2/repo\",\"root\":\"GRADLE_USER_HOME\"},\"ARTIFACT_URLS\":[],\"AUTHENTICATED\":false,\"METADATA_SOURCES\":[\"artifact\"],\"AUTHENTICATION_SCHEMES\":[]}"
+  } ],
   "failureIds" : [ ],
   "failures" : ""
 }""".trimIndent()
