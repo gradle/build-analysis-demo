@@ -2,18 +2,6 @@ package org.gradle.buildeng.analysis.model
 
 import java.time.Instant
 
-/**
- * -- What versions of Dependency X are folks using?
- *
- * select version, count(version)
- * from dependency_resolutions
- * where rootProjectName = 'gradle'
- *  and resolutionType like 'ModuleComponentIdentity_1_%'
- *  and group = 'com.google.cloud'
- *  and module = 'google-cloud-core-http'
- *  and timestamp (in last 7 days)
- */
-
 data class DependencyResolution(
         val rootProjectName: String,
         val buildId: String,
@@ -21,6 +9,7 @@ data class DependencyResolution(
         val moduleDependencies: List<ModuleDependency>,
         val projectDependencies: List<ProjectDependency>,
         val unknownTypeDependencies: List<UnknownTypeDependency>,
+        val repositories: List<Repository>,
         val failureIds: List<String>,
         val failures: String?
 )
