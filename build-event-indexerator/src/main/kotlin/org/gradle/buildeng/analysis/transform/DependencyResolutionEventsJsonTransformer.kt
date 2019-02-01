@@ -6,7 +6,8 @@ import org.gradle.buildeng.analysis.model.BuildEvent
 import java.time.Instant
 
 class DependencyResolutionEventsJsonTransformer : EventsJsonTransformer() {
-    override fun transform(list: List<String>): String {
+    fun transform(fileContents: String): String {
+        val list = fileContents.split("\n")
         if (list.isEmpty()) {
             throw IllegalArgumentException("Cannot transform empty input")
         }
@@ -20,6 +21,7 @@ class DependencyResolutionEventsJsonTransformer : EventsJsonTransformer() {
         val moduleDependencies = mutableListOf<ModuleDependency>()
         val projectDependencies = mutableListOf<ProjectDependency>()
         val unknownTypeDependencies = mutableListOf<UnknownTypeDependency>()
+        val repositories = mutableListOf<Repository>()
         val failureIds = mutableListOf<String>()
         var failures: String? = null
 
@@ -42,21 +44,31 @@ class DependencyResolutionEventsJsonTransformer : EventsJsonTransformer() {
                     val identities = buildEvent.data.get("identities")
                     val resolvedDependencyIds = buildEvent.data.get("dependencies").fields().asSequence().map { dependency -> dependency.value.get("to").asText() }
                     resolvedDependencyIds.forEach { id ->
-                        val node = identities.get(id)
-                        when (node.get("type").asText()) {
-                            "ModuleComponentIdentity_1_0" -> moduleDependencies.add(ModuleDependency(node.path("group").asText(), node.path("module").asText(), node.path("version").asText()))
-                            "ProjectComponentIdentity_1_0" -> projectDependencies.add(ProjectDependency(null, node.get("projectPath").asText()))
-                            "ProjectComponentIdentity_1_1" -> projectDependencies.add(ProjectDependency(node.path("buildPath").asText(), node.get("projectPath").asText()))
-                            "UnknownTypeComponentIdentity_1_0" -> unknownTypeDependencies.add(UnknownTypeDependency(node.path("className").asText(), node.path("displayName").asText()))
-                            else -> println("WARNING: Unknown dependency type $it encountered in build $buildId")
+                        val node: JsonNode? = identities.get(id)
+                        if (node == null) {
+                            println("WARNING: Unable to get component identity for resolved dependency id [$id]")
+                        } else {
+                            when (node.path("type").asText()) {
+                                "ModuleComponentIdentity_1_0" -> moduleDependencies.add(ModuleDependency(node.path("group").asText(), node.path("module").asText(), node.path("version").asText()))
+                                "ProjectComponentIdentity_1_0" -> projectDependencies.add(ProjectDependency(null, node.path("projectPath").asText()))
+                                "ProjectComponentIdentity_1_1" -> projectDependencies.add(ProjectDependency(node.path("buildPath").asText(), node.path("projectPath").asText()))
+                                "UnknownTypeComponentIdentity_1_0" -> unknownTypeDependencies.add(UnknownTypeDependency(node.path("className").asText(), node.path("displayName").asText()))
+                                else -> println("WARNING: Unknown dependency type [$it] encountered in build $buildId")
+                            }
                         }
                     }
                 }
-//                "Repository" -> {}
+                "Repository" -> repositories.add(
+                        Repository(
+                                buildEvent.data.get("id").asText(),
+                                buildEvent.data.path("name").asText(),
+                                buildEvent.data.path("type").asText(),
+                                objectWriter.writeValueAsString(buildEvent.data.path("properties"))))
+
             }
         }
 
-        val dependencyResolution = DependencyResolution(rootProjectName, buildId, timestamp, moduleDependencies, projectDependencies, unknownTypeDependencies, failureIds, failures)
+        val dependencyResolution = DependencyResolution(rootProjectName, buildId, timestamp, moduleDependencies, projectDependencies, unknownTypeDependencies, repositories, failureIds, failures)
         return objectWriter.writeValueAsString(objectMapper.convertValue(dependencyResolution, JsonNode::class.java))
     }
 }
