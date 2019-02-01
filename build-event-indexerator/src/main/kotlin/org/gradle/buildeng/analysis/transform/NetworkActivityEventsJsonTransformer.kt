@@ -38,18 +38,26 @@ class NetworkActivityEventsJsonTransformer {
             when (buildEvent?.type?.eventType) {
                 "NetworkDownloadActivityStarted" -> {
                     val id = buildEvent.data.get("id").asText()
-                    val url = URL(buildEvent.data.get("location").asText())
-                    val contentLength = buildEvent.data.get("contentLength").asLong()
-                    networkActivities[id] = NetworkActivity(buildId, id, url.host, url.path, contentLength, buildEvent.timestamp)
+                    try {
+                        val url = URL(buildEvent.data.path("location").asText())
+                        val contentLength = buildEvent.data.get("contentLength").asLong()
+                        networkActivities[id] = NetworkActivity(buildId, id, url.host, url.path, contentLength, buildEvent.timestamp)
+                    } catch (e: Exception) {
+                        println("Got exception parsing URL: ${e.message}")
+                    }
                 }
                 "NetworkDownloadActivityFinished" -> {
                     val id = buildEvent.data.get("id").asText()
-                    val startedActivity = networkActivities[id]!!
-                    networkActivities[id] = startedActivity.copy(
-                            duration = Duration.between(startedActivity.startTimestamp, buildEvent.timestamp),
-                            failureId = buildEvent.data.path("failureId").asText(),
-                            failure = buildEvent.data.path("failure").asText()
-                    )
+                    try {
+                        val startedActivity = networkActivities[id]!!
+                        networkActivities[id] = startedActivity.copy(
+                                duration = Duration.between(startedActivity.startTimestamp, buildEvent.timestamp),
+                                failureId = buildEvent.data.path("failureId").asText(),
+                                failure = buildEvent.data.path("failure").asText()
+                        )
+                    } catch (e: Exception) {
+                        println("Network Activity Started with ID [$id] could not be found")
+                    }
                 }
             }
         }
