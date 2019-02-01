@@ -1,11 +1,6 @@
 package org.gradle.buildeng.analysis.transform
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.module.SimpleModule
-import org.gradle.buildeng.analysis.common.DurationSerializer
-import org.gradle.buildeng.analysis.common.InstantSerializer
-import org.gradle.buildeng.analysis.common.NullAvoidingStringSerializer
 import org.gradle.buildeng.analysis.model.BuildCacheInteraction
 import org.gradle.buildeng.analysis.model.BuildEvent
 import java.time.Duration
@@ -13,21 +8,7 @@ import java.time.Duration
 /**
  * Transforms BuildEvent JSON into {@see BuildCacheInteraction}s.
  */
-class BuildCacheEventsJsonTransformer {
-
-    private val objectMapper = ObjectMapper()
-    private val objectReader = objectMapper.reader()
-    private val objectWriter = objectMapper.writer()
-
-    init {
-        objectMapper.registerModule(object : SimpleModule() {
-            init {
-                addSerializer(InstantSerializer())
-                addSerializer(DurationSerializer())
-                addSerializer(NullAvoidingStringSerializer())
-            }
-        })
-    }
+class BuildCacheEventsJsonTransformer : EventsJsonTransformer() {
 
     fun transform(fileContents: String): List<String> {
         val buildCacheInteractions = mutableMapOf<String, BuildCacheInteraction>()

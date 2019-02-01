@@ -10,7 +10,8 @@ import java.time.Instant
 
 class TestEventsJsonTransformer : EventsJsonTransformer() {
 
-    override fun transform(list: List<String>): String {
+    fun transform(fileContents: String): String {
+        val list = fileContents.split("\n")
         if (list.isEmpty()) {
             throw IllegalArgumentException("Cannot transform empty input")
         }

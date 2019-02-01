@@ -22,16 +22,4 @@ abstract class EventsJsonTransformer {
             }
         })
     }
-
-    fun transform(input: String): String {
-        return transform(input.split("\n"))
-    }
-
-    abstract fun transform(list: List<String>): String
-
-//    abstract fun transformLines(input: List<String>): String
-//
-//    abstract fun transformLine(input: String): String
-//
-//    abstract fun transformExpandLine(input: String): List<String>
 }
