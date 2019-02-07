@@ -150,10 +150,12 @@ Let's break this down a bit:
 * Task has gotten X% and at least Y seconds slower
 
 // TODO: document how to create a partitioned reporting table using bigquery CLI: https://cloud.google.com/bigquery/docs/bq-command-line-tool
+https://cloud.google.com/bigquery/docs/creating-column-partitions#creating_a_partitioned_table_from_a_query_result
 
 [listing]
 ====
 bq --location=[LOCATION] query --destination_table build-analysis:gradle_builds.[TABLE] --time_partitioning_field [COLUMN] --use_legacy_sql=false '[QUERY]'
+bq --location=US query --nouse_legacy_sql --destination_table=T$20180201 'SELECT TIMESTAMP("2018-02-01") as TS, 2 as a'
 ====
 
 * Build cache effectiveness goes down by X%
