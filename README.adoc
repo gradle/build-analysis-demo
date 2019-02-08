@@ -35,7 +35,9 @@ Reference Materials:
  * link:https://cloud.google.com/storage/docs/uploading-objects#storage-upload-object-java[Google Cloud Storage docs]
 
 ==== Running Build Event Collector
-====sh
+
+[listing]
+====
 gcloud compute instances create build-event-collectorator1 \
    --preemptible \
    --image-family debian-9 \
@@ -63,7 +65,9 @@ By default the collector processes only builds from the moment the app is starte
 Similarly, you can specify a `export LAST_BUILD_ID="jh4qknspatp2y"` to start streaming from the build _immediately after_ the given build ID.
 
 ==== Getting logs for a given instance
-====sh
+
+[listing]
+====
 gcloud compute instances get-serial-port-output build-event-collectorator1
 ====
 
@@ -116,21 +120,17 @@ Let's break this down a bit:
 // convert collector to Ratpack and enable compression
 // Make type-safe JSON build event model instead of silly guessing
 
-// TODO: Collecting
-// Collect data in May-August 2018
-// Collect data from December 2018
-
 // TODO: improve indexes
 // Index Git commit data from user tags into builds/tests/error tables
 // maybe re-index tests data with local changes?
 // Index plugin applications data
-// reindex Network activities after collecting historical data
-
-// TODO: dashboarding
-// Check out Cloud Datalab for viz: https://cloud.google.com/datalab/
-// Data Studio dashboard which hits BigQuery
+// Re-think Costliest Errors, need to index the associated task with error data. Also need to re-index exceptions in a way that reflects how they associate to the build, and relate the causes
 
 // TODO: documentation
+// Document the BigQuery tables generated
+// Document the queries to generate Data Studio reporting tables
+
+
 // Blog about all this stuff https://github.com/gradle/blog/issues/136
 // "What’s the flakiness rate over all branches?"
 // "How many flaky tests are there per day/per week over all branches?"
@@ -378,7 +378,9 @@ ORDER BY
  * JDK 8 installed
 
 === Google Cloud initial setup
-====sh
+
+[listing]
+====
 gcloud config set compute/region us-central1
 ====
 
@@ -386,7 +388,8 @@ gcloud config set compute/region us-central1
 
 _NOTE: Make sure you're using JDK8 and logged into Google Cloud first._
 
-====sh
+[listing]
+====
 ./gradlew publish
 ====
 
