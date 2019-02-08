@@ -19,7 +19,7 @@ allprojects {
     }
 }
 
-subprojects {
+configure(subprojects - project(":ratpack-client")) {
     apply(plugin = "org.gradle.kotlin.kotlin-dsl")
 
     kotlinDslPluginOptions {
