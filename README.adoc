@@ -36,8 +36,7 @@ Reference Materials:
 
 ==== Running Build Event Collector
 
-[listing]
-====
+```
 gcloud compute instances create build-event-collectorator1 \
    --preemptible \
    --image-family debian-9 \
@@ -58,7 +57,7 @@ echo "Running ${APP_NAME}-${APP_VERSION}..."
 unzip "${APP_NAME}-${APP_VERSION}.zip"
 sh "${APP_NAME}-${APP_VERSION}/bin/${APP_NAME}"
 echo "Application exited"'
-====
+```
 
 By default the collector processes only builds from the moment the app is started, but you can collect past builds by setting `export BACKFILL_DAYS=<number>` in the startup script.
 
@@ -66,10 +65,9 @@ Similarly, you can specify a `export LAST_BUILD_ID="jh4qknspatp2y"` to start str
 
 ==== Getting logs for a given instance
 
-[listing]
-====
+```
 gcloud compute instances get-serial-port-output build-event-collectorator1
-====
+```
 
 === Build Producerator app
 This app is not necessary right now. It streamed build events to Google Cloud PubSub to allow fanout with many build event collectors.
@@ -92,17 +90,15 @@ We are using FileIO here to read whole files and filter lines rather than readin
 
 You can run any indexer locally using a task rule and the `DirectRunner`:
 
-[listing]
-====
+```
 ./gradlew :build-event-indexerator:indexBuildEvents --args="--runner=DirectRunner --project=build-analysis --input=gs://build-events-raw/2019/01/01/22*.txt --output=build-analysis:gradle_builds.builds"
-====
+```
 
 Once you're happy with your Apache Beam setup, create a Google Dataflow job to run over a larger input.
 
-[listing]
-====
+```
 ./gradlew :build-event-indexerator:indexTestEvents --args="--runner=DataflowRunner --project=build-analysis --input=gs://build-events-raw/2019/01/** --output=build-analysis:gradle_builds.test_executions --region=us-central1 --tempLocation=gs://gradle-dataflow-tmp/$(openssl rand -hex 8)"
-====
+```
 
 Let's break this down a bit:
 
@@ -152,11 +148,10 @@ Let's break this down a bit:
 // TODO: document how to create a partitioned reporting table using bigquery CLI: https://cloud.google.com/bigquery/docs/bq-command-line-tool
 https://cloud.google.com/bigquery/docs/creating-column-partitions#creating_a_partitioned_table_from_a_query_result
 
-[listing]
-====
+```
 bq --location=[LOCATION] query --destination_table build-analysis:gradle_builds.[TABLE] --time_partitioning_field [COLUMN] --use_legacy_sql=false '[QUERY]'
 bq --location=US query --nouse_legacy_sql --destination_table=T$20180201 'SELECT TIMESTAMP("2018-02-01") as TS, 2 as a'
-====
+```
 
 * Build cache effectiveness goes down by X%
 
@@ -164,8 +159,7 @@ bq --location=US query --nouse_legacy_sql --destination_table=T$20180201 'SELECT
 
 * Number of builds (local and CI)
 
-[source,sql]
-====
+```sql
 SELECT
   FORMAT_TIMESTAMP('%Y-%m-%d', buildTimestamp) AS day,
   STARTS_WITH(buildAgentId, 'tcagent') AS isCI,
@@ -181,12 +175,11 @@ GROUP BY
 ORDER BY
   1,
   2;
-====
+```
 
 * Number of build failures
 
-[source,sql]
-====
+```sql
 SELECT
   FORMAT_TIMESTAMP('%Y-%m-%d', buildTimestamp) AS day,
   STARTS_WITH(buildAgentId, 'tcagent') AS isCI,
@@ -203,7 +196,7 @@ GROUP BY
 ORDER BY
   1,
   2;
-====
+```
 
 * What is the impact of flaky test failures on local builds?
 
@@ -227,8 +220,7 @@ ORDER BY
 
 * What versions of library X are in use by frequency?
 
-[source,sql]
-====
+```sql
 SELECT
   DISTINCT(CONCAT(dependency.group, ':', dependency.module, ':', dependency.version)),
   b.rootProjectName AS project
@@ -243,12 +235,11 @@ WHERE
   dependency.group = 'com.google.guava'
   AND dependency.module = 'guava'
   AND d.buildTimestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY);
-====
+```
 
 * How frequent does buildSrc compilation happen locally?
 
-[source,sql]
-====
+```sql
 SELECT
   tasks.buildPath,
   tasks.outcome,
@@ -264,12 +255,11 @@ GROUP BY
   1, 2
 ORDER BY
   3 DESC;
-====
+```
 
 * What versions of Gradle are in use recently?
 
-[source,sql]
-====
+```sql
 SELECT
   buildToolVersion,
   COUNT(buildId) as count
@@ -282,12 +272,11 @@ GROUP BY
   1
 ORDER BY
   2 DESC;
-====
+```
 
 * Is any local build still using Java 7? Using Windows? How much memory/CPUs?
 
-[source,sql]
-====
+```sql
 SELECT
   JSON_EXTRACT(env.value,
     '$.version') as jdk_version,
@@ -304,12 +293,11 @@ GROUP BY
   1
 ORDER BY
   2 DESC;
-====
+```
 
 * Which Gradle features are everyone using? Is everyone using the Daemon?
 
-[source,sql]
-====
+```sql
 SELECT
   buildAgentId,
   JSON_EXTRACT(env.value,
@@ -333,12 +321,11 @@ GROUP BY
   3
 ORDER BY
   4 DESC;
-====
+```
 
 * Most common build cache failures
 
-[source,sql]
-====
+```sql
 SELECT
   bc.id,
   ex.message,
@@ -357,7 +344,7 @@ GROUP BY
   2
 ORDER BY
   3 DESC;
-====
+```
 
 * Given a task, tell me the cache rate, mean/stddev/histogram, etc. How has this changed over time?
 * Given a test, tell me the outcome history, duration, flakiness, etc.
@@ -379,18 +366,16 @@ ORDER BY
 
 === Google Cloud initial setup
 
-[listing]
-====
+```
 gcloud config set compute/region us-central1
-====
+```
 
 === Publishing to Google Cloud
 
 _NOTE: Make sure you're using JDK8 and logged into Google Cloud first._
 
-[listing]
-====
+```
 ./gradlew publish
-====
+```
 
 This will publish distZips for all apps to a Maven repository at `gcs://gradle-build-analysis-apps/maven2`
