@@ -13,7 +13,7 @@ These applications collect and index Gradle Enterprise and GitHub events data in
 
 == Data Pipeline
 
-image:build-analysis-data.pipeline.png[]
+image:build-analysis-data-pipeline.png[]
 
 === Build Event Collector app
 This application is responsible for streaming build event data from a configured Gradle Enterprise export API endpoint into a specified Google Cloud Storage bucket.
