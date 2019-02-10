@@ -15,26 +15,12 @@ class ExceptionDataEventsJsonTransformer : EventsJsonTransformer() {
                 .filter { it.contains("\"eventType\":\"ExceptionData\"") }
                 .forEach {
             val exceptionEvent = BuildEvent.fromJson(objectReader.readTree(it))!!
+                    //"taskPath": ":build-event-transformerator:test"
             val stackTracesNode = exceptionEvent.data.get("stackTraces")
-            val stackFramesNode = exceptionEvent.data.get("stackFrames")
+
+                    // TODO:
 
             exceptionEvent.data.get("exceptions").fields().asSequence().forEach { exceptionKVs ->
-                val stackTraceNode = stackTracesNode.get(exceptionKVs.value.get("stackTrace").asText())
-                val stackFrameIds = stackTraceNode.get("stackFrames")
-                        .map { stackFrameNode ->
-                            val stackFrameId = stackFrameNode.asText()
-                            val jsonNode = stackFramesNode.get(stackFrameNode.asText())
-                            StackFrame(
-                                    stackFrameId,
-                                    jsonNode.path("declaringClass").asText(),
-                                    jsonNode.path("methodName").asText(),
-                                    jsonNode.path("fileName").asText(),
-                                    jsonNode.path("lineNumber").asInt(),
-                                    jsonNode.path("fileRef").asText())
-                        }
-
-                val stackTrace = StackTrace(exceptionKVs.value.path("stackTrace").asText(), stackFrameIds)
-
                 exceptions.add(ExceptionData(
                         exceptionKVs.key,
                         exceptionKVs.value.path("className").asText(),
