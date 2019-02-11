@@ -65,7 +65,7 @@ This app is not necessary right now. It streamed build events to Google Cloud Pu
 Currently the limiting factor is network outbound from the Gradle Enterprise server and multiple downloaders do not make processing faster.
 
 === Build Event Indexer apps
-These applications are responsible for transforming raw data pulled from Google Cloud Storage, tranforming and combining those events using link:Apache Beam[https://beam.apache.org/].
+These applications are responsible for transforming raw data pulled from Google Cloud Storage, tranforming and combining those events using link:https://beam.apache.org/[Apache Beam].
 Each application consists of a `EventModel` that represents the schema of the BigQuery table to be generated, an `EventJsonTransformer` which filters and transforms data, and a `BuildIndexer` which writes to BigQuery.
 
 You can develop your own indexer by creating a Model, EventsJsonTransformer, and an Indexer.
@@ -102,7 +102,7 @@ Let's break this down a bit:
 === Creating Dashboards Using Data Studio
 Reporting-specific tables must be created in BigQuery in order to keep reasonable Data Studio costs and performance.
 
-You need to use the link:BigQuery CLI[https://cloud.google.com/bigquery/docs/bq-command-line-tool] or API link:https://cloud.google.com/bigquery/docs/creating-column-partitions#creating_a_partitioned_table_from_a_query_result[to create new partitioned tables].
+You need to use the link:https://cloud.google.com/bigquery/docs/bq-command-line-tool[BigQuery CLI] or API link:https://cloud.google.com/bigquery/docs/creating-column-partitions#creating_a_partitioned_table_from_a_query_result[to create new partitioned tables].
 Using time partitioned tables allows us Data Studio to avoid querying all of the data when querying a subset of the time range.
 
 Here's an example command:
@@ -219,7 +219,7 @@ Schemas are generated from data classes under `build-event-indexerator/src/main/
 Some fields are JSON. See link:https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions[BigQuery JSON functions] for reference.
 
 === Updating data
-You can use Google Cloud Scheduler or plain old `cron` to schedule ~daily data updates. See link:Cloud Scheduler Docs[https://cloud.google.com/scheduler/docs/scheduling-instances-with-cloud-scheduler]
+You can use Google Cloud Scheduler or plain old `cron` to schedule ~daily data updates. See link:https://cloud.google.com/scheduler/docs/scheduling-instances-with-cloud-scheduler[Cloud Scheduler Docs]
 
 ==== Ad-hoc Query Examples
 
