@@ -4,10 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.Test
 import java.io.File
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class BuildEventsJsonTransformerTest {
     @Test
-    fun testTransformBuildWithFailureAndTags() {
+    fun testTransformBuild() {
         val buildEventsFile = File(this::class.java.classLoader.getResource("all-build-events-json.txt").file)
         val objectMapper = ObjectMapper()
         val jsonNode = objectMapper.readTree(BuildEventsJsonTransformer().transform(buildEventsFile.readText()))
@@ -28,6 +29,24 @@ class BuildEventsJsonTransformerTest {
         assertEquals(7, jsonNode.get("userTag").size())
 
         assertEquals(expectedOutput, objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode))
+    }
+
+    @Test
+    fun testTransformBuildWithFailure() {
+        val buildEventsFile = File(this::class.java.classLoader.getResource("failing-test-events-json.txt").file)
+        val objectMapper = ObjectMapper()
+        val jsonNode = objectMapper.readTree(BuildEventsJsonTransformer().transform(buildEventsFile.readText()))
+
+        assertEquals("build-analysis", jsonNode.get("rootProjectName").asText())
+        assertEquals("cokuz2qlzlhck", jsonNode.get("buildId").asText())
+        assertEquals("3107853242888327571", jsonNode.get("failureId").asText())
+        assertEquals(true, jsonNode.get("failed").asBoolean())
+        assertEquals("VERIFICATION", jsonNode.get("failureData").get("category").asText())
+        assertEquals(":build-event-transformerator:test", jsonNode.get("failureData").get("taskPaths")[0].asText())
+        assertTrue(jsonNode.get("failureData").get("causes").isArray)
+        assertEquals(2, jsonNode.get("failureData").get("causes").size())
+        assertEquals("org.junit.ComparisonFailure", jsonNode.get("failureData").get("causes")[0].get("className").asText())
+        assertEquals("org.gradle.api.GradleException", jsonNode.get("failureData").get("causes")[1].get("className").asText())
     }
 
     private val expectedOutput = """{
@@ -61,6 +80,7 @@ class BuildEventsJsonTransformerTest {
   "wallClockDuration" : 15407,
   "failureId" : "",
   "failed" : false,
+  "failureData" : null,
   "userLink" : [ {
     "label" : "TeamCity Build",
     "url" : "https://builds.gradle.org/viewLog.html?buildId=18783100"
