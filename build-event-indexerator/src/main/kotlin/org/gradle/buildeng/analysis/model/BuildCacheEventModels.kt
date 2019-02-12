@@ -5,6 +5,7 @@ import java.time.Instant
 
 data class BuildCacheInteraction(
         val id: String,
+        val buildId: String,
         val taskId: String,
         val type: String,
         val cacheKey: String,
