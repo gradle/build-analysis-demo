@@ -26,6 +26,7 @@ class TestEventsJsonTransformer : EventsJsonTransformer() {
 
         val rawBuildEvents = list.drop(1)
         val testEvents = mutableListOf<BuildEvent>()
+        val taskIdToPath = mutableMapOf<String, String>()
 
         rawBuildEvents.filter { it.isNotEmpty() }.forEach {
             val buildEvent = BuildEvent.fromJson(objectReader.readTree(it))
@@ -38,6 +39,7 @@ class TestEventsJsonTransformer : EventsJsonTransformer() {
                         rootProjectName = buildEvent.data.get("rootProjectName").asText()
                     }
                 }
+                "TaskStarted" -> taskIdToPath[buildEvent.data.get("id").asText()] = buildEvent.data.get("path").asText()
                 "TestStarted" -> testEvents.add(buildEvent)
                 "TestFinished" -> testEvents.add(buildEvent)
             }
@@ -52,7 +54,7 @@ class TestEventsJsonTransformer : EventsJsonTransformer() {
                             buildEvent.data.get("suite").asBoolean(),
                             buildEvent.data.get("className").asText(),
                             buildEvent.data.get("name").asText(),
-                            buildEvent.data.get("task").asText(),
+                            taskIdToPath[buildEvent.data.get("task").asText()].orEmpty(),
                             listOf(TestExecution(buildEvent.timestamp, Duration.ZERO, false, false, null, null))
                     )
                     tests[buildEvent.data.get("id").asLong()] = test

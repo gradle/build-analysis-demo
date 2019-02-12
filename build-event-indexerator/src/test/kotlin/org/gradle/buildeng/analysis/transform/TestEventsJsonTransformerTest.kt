@@ -22,7 +22,7 @@ class TestEventsJsonTransformerTest {
         assertEquals(false, firstTest.get("suite").asBoolean())
         assertEquals("org.gradle.buildeng.analysis.transform.BuildEventTest", firstTest.get("className").asText())
         assertEquals("testFromJson", firstTest.get("name").asText())
-        assertEquals("-5131328941296046863", firstTest.get("taskId").asText())
+        assertEquals(":build-event-transformerator:test", firstTest.get("taskId").asText())
 
         assertTrue(firstTest.get("executions").isArray)
         assertEquals(1, firstTest.get("executions").size())
