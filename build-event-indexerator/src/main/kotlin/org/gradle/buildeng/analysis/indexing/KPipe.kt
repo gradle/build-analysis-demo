@@ -70,7 +70,7 @@ fun PCollection<TableRow>.toTable(
                     .to(tableId)
                     .withTimePartitioning(timePartitioning)
                     .withCreateDisposition(BigQueryIO.Write.CreateDisposition.CREATE_IF_NEEDED)
-                    .withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_TRUNCATE))
+                    .withWriteDisposition(BigQueryIO.Write.WriteDisposition.WRITE_APPEND))
 }
 
 inline fun <I, reified O> PCollection<I>.map(
