@@ -19,7 +19,7 @@ class BuildCacheEventsJsonTransformerTest {
         assertEquals("-5109164361004395213", interactionJson.path("taskId").asText())
         assertEquals("BuildCacheUnpack", interactionJson.path("type").asText())
         assertEquals("e914e0d77f8cd8a43576751dda28d9c7", interactionJson.path("cacheKey").asText())
-        assertEquals("2019-01-01 15:54:44.081-07:00", interactionJson.path("startTimestamp").asText())
+        assertEquals("2019-01-01 22:54:44.081+00", interactionJson.path("startTimestamp").asText())
         assertEquals(0, interactionJson.path("duration").asInt())
         assertEquals("", interactionJson.path("failureId").asText())
     }

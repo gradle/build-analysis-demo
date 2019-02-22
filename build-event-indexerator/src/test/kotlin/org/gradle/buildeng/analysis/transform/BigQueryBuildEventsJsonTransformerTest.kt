@@ -13,7 +13,7 @@ class BigQueryBuildEventsJsonTransformerTest {
         assertEquals("f23vwoax6n4uy", jsonNode.get("buildId").asText())
         assertEquals("2.1", jsonNode.get("pluginVersion").asText())
         assertEquals("5.1-rc-3", jsonNode.get("gradleVersion").asText())
-        assertEquals("2019-01-01 16:02:47.880+00", jsonNode.get("timestamp").asText())
+        assertEquals("2019-01-01 23:02:47.880+00", jsonNode.get("timestamp").asText())
     }
 
     @Test fun testTransformEventsFile() {
@@ -28,7 +28,7 @@ class BigQueryBuildEventsJsonTransformerTest {
         assertTrue(jsonNode.get("event").get(0).get("data").isTextual)
 
         assertEquals("DaemonState", jsonNode.get("event")?.get(0)?.get("type")?.get("eventType")?.asText())
-        assertEquals("2019-01-01 16:02:51.267+00", jsonNode.get("event")?.get(0)?.get("timestamp")?.asText())
+        assertEquals("2019-01-01 23:02:51.267+00", jsonNode.get("event")?.get(0)?.get("timestamp")?.asText())
         assertEquals("""{"startTime":1546381961320,"buildNumber":49,"numberOfRunningDaemons":1,"idleTimeout":10800000,"singleUse":false}""", jsonNode.get("event")?.get(0)?.get("data")?.asText())
 
         assertEquals("BasicMemoryStats", jsonNode.get("event")?.get(2246)?.get("type")?.get("eventType")?.asText())

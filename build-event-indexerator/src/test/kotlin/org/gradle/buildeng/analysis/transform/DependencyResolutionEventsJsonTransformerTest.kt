@@ -14,7 +14,7 @@ class DependencyResolutionEventsJsonTransformerTest {
 
         assertEquals("build-analysis", jsonNode.get("rootProjectName").asText())
         assertEquals("obh7rlvvaedyu", jsonNode.get("buildId").asText())
-        assertEquals("2019-01-16 14:32:03.671-07:00", jsonNode.get("buildTimestamp").asText())
+        assertEquals("2019-01-16 21:32:03.671+00", jsonNode.get("buildTimestamp").asText())
         assertEquals(67, jsonNode.get("moduleDependencies").size())
         assertEquals(1, jsonNode.get("projectDependencies").size())
         assertEquals(0, jsonNode.get("unknownTypeDependencies").size())
@@ -28,7 +28,7 @@ class DependencyResolutionEventsJsonTransformerTest {
     private val expectedOutput = """{
   "rootProjectName" : "build-analysis",
   "buildId" : "obh7rlvvaedyu",
-  "buildTimestamp" : "2019-01-16 14:32:03.671-07:00",
+  "buildTimestamp" : "2019-01-16 21:32:03.671+00",
   "moduleDependencies" : [ {
     "group" : "com.google.apis",
     "module" : "google-api-services-storage",

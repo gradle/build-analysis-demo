@@ -61,5 +61,6 @@ data class BuildEventType(val eventType: String, val majorVersion: Int, val mino
 
 fun Long.toBigQueryDate(): String {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS+00")
+    dateFormat.timeZone = TimeZone.getTimeZone("GMT")
     return dateFormat.format(Date(this))
 }

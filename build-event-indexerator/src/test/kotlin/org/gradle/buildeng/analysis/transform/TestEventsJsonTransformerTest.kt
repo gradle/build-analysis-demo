@@ -27,7 +27,7 @@ class TestEventsJsonTransformerTest {
         assertTrue(firstTest.get("executions").isArray)
         assertEquals(1, firstTest.get("executions").size())
 
-        assertEquals("2019-01-11 12:07:32.982-07:00", firstTest.get("executions").get(0).get("startTimestamp").asText())
+        assertEquals("2019-01-11 19:07:32.982+00", firstTest.get("executions").get(0).get("startTimestamp").asText())
         assertEquals(36, firstTest.get("executions").get(0).get("wallClockDuration").asInt())
         assertEquals(false, firstTest.get("executions").get(0).get("skipped").asBoolean())
         assertEquals(true, firstTest.get("executions").get(0).get("failed").asBoolean())

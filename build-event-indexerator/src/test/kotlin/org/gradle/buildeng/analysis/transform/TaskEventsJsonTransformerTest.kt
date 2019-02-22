@@ -22,7 +22,7 @@ class TaskEventsJsonTransformerTest {
         assertEquals(":buildSrc", firstTask.get("buildPath").asText())
         assertEquals(":discoverMainScriptsExtensions", firstTask.get("path").asText())
         assertEquals("org.jetbrains.kotlin.gradle.scripting.internal.DiscoverScriptExtensionsTask", firstTask.get("className").asText())
-        assertEquals("2019-01-01 16:02:52.179-07:00", firstTask.get("startTimestamp").asText())
+        assertEquals("2019-01-01 23:02:52.179+00", firstTask.get("startTimestamp").asText())
         assertEquals("1", firstTask.get("wallClockDuration").asText())
         assertEquals("success", firstTask.get("outcome").asText())
     }

@@ -11,11 +11,12 @@ import java.util.*
 
 class InstantSerializer : JsonSerializer<Instant>() {
     companion object {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSXXX")
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS+00")
     }
 
     @Throws(IOException::class)
     override fun serialize(value: Instant, gen: JsonGenerator, serializers: SerializerProvider) {
+        dateFormat.timeZone = TimeZone.getTimeZone("GMT")
         gen.writeString(dateFormat.format(Date(value.toEpochMilli())))
     }
 
