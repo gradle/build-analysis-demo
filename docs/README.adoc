@@ -314,6 +314,7 @@ ORDER BY 4 DESC;
 
 ```
 gcloud config set compute/region us-central1
+gcloud config set compute/zone us-central1-f
 ```
 
 === Publishing to Google Cloud
