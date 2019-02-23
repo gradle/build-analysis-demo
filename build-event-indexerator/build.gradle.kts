@@ -4,16 +4,16 @@ plugins {
 
 dependencies {
     implementation(project(":analysis-common"))
-    implementation(kotlin("reflect", "1.3.20"))
-    implementation(kotlin("stdlib-jdk8", "1.3.20"))
+    implementation(kotlin("reflect", "1.3.21"))
+    implementation(kotlin("stdlib-jdk8", "1.3.21"))
 
     implementation("com.fasterxml.jackson.core:jackson-databind:2.8.2")
 
     implementation("org.apache.beam:beam-sdks-java-core:2.9.0")
     implementation("org.apache.beam:beam-runners-direct-java:2.9.0")
     implementation("org.apache.beam:beam-runners-google-cloud-dataflow-java:2.9.0")
-    implementation("com.google.cloud:google-cloud-bigquery:1.55.0")
-    implementation("com.google.cloud:google-cloud-storage:1.55.0")
+    implementation("com.google.cloud:google-cloud-bigquery:1.63.0")
+    implementation("com.google.cloud:google-cloud-storage:1.63.0")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")

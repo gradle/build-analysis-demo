@@ -34,8 +34,8 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
     private val storage: Storage = StorageOptions.getDefaultInstance().service
     private val daySlashyFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
 
-    fun consume(since: Instant, lastEventId: String?, gcsBucketName: String) {
-        buildStream(since, lastEventId)
+    fun consume(startEpoch: Long, stopEpoch: Long, gcsBucketName: String) {
+        buildStream(startEpoch)
                 .doOnSubscribe { println("Streaming builds from [${geServer.socketAddress.hostName}] to gs://$gcsBucketName/") }
                 .map { serverSentEvent -> parse(serverSentEvent) }
                 .map { json -> Pair(json["buildId"].asText(), json["timestamp"].asLong()) }
@@ -44,18 +44,22 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
                             .doOnSubscribe { println("Streaming events for build $buildId at $timestamp") }
                             .toList()
                             .map { serverSentEvents ->
-                                try {
-                                    val localDate = Instant.ofEpochMilli(timestamp).atZone(ZoneOffset.UTC).toLocalDate()
-                                    val blobKey = "${localDate.format(daySlashyFormat)}/$buildId-json.txt"
-                                    val blobInfo = BlobInfo
-                                            .newBuilder(BlobId.of(gcsBucketName, blobKey))
-                                            .setContentType("text/plain")
-                                            .build()
+                                if (timestamp >= stopEpoch) {
+                                    println("Skipping build with timestamp $timestamp which is after $stopEpoch.")
+                                } else {
+                                    try {
+                                        val localDate = Instant.ofEpochMilli(timestamp).atZone(ZoneOffset.UTC).toLocalDate()
+                                        val blobKey = "${localDate.format(daySlashyFormat)}/$buildId-json.txt"
+                                        val blobInfo = BlobInfo
+                                                .newBuilder(BlobId.of(gcsBucketName, blobKey))
+                                                .setContentType("text/plain")
+                                                .build()
 
-                                    storage.create(blobInfo, byteBufsToJoinedArray(serverSentEvents))
-                                    println("[${System.currentTimeMillis()}] $blobKey written")
-                                } finally {
-                                    serverSentEvents.forEach { assert(it.release()) }
+                                        storage.create(blobInfo, byteBufsToJoinedArray(serverSentEvents))
+                                        println("[${System.currentTimeMillis()}] $blobKey written")
+                                    } finally {
+                                        serverSentEvents.forEach { assert(it.release()) }
+                                    }
                                 }
                             }
                 }, 20)
@@ -93,15 +97,15 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
         }
     }
 
-    private fun buildStream(since: Instant, lastEventId: String?): Observable<ServerSentEvent> {
-        return resume("/build-export/v1/builds/since/${since.toEpochMilli()}", lastEventId)
+    private fun buildStream(fromTimestamp: Long): Observable<ServerSentEvent> {
+        return resume("/build-export/v1/builds/since/$fromTimestamp")
     }
 
     private fun buildEventStream(buildId: String): Observable<ServerSentEvent> {
-        return resume("/build-export/v1/build/$buildId/events?eventTypes=${eventTypes.joinToString(",")}", null)
+        return resume("/build-export/v1/build/$buildId/events?eventTypes=${eventTypes.joinToString(",")}")
     }
 
-    private fun resume(url: String, lastEventId: String?): Observable<ServerSentEvent> {
+    private fun resume(url: String, lastEventId: String? = null): Observable<ServerSentEvent> {
         val eventId = AtomicReference<String>()
 
         val authByteBuf = Unpooled.copiedBuffer("${geServer.username}:${geServer.password}".toCharArray(), CharsetUtil.UTF_8)

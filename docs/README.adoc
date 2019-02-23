@@ -35,7 +35,7 @@ gcloud compute instances create build-event-collectorator1 \
    --scopes "userinfo-email,cloud-platform" \
    --metadata startup-script='#!/bin/sh
 APP_NAME="build-event-collectorator"
-APP_VERSION="0.4.1"
+APP_VERSION="0.5.0"
 export GRADLE_ENTERPRISE_HOSTNAME="gradle-enterprise.mycompany.com"
 export GRADLE_ENTERPRISE_USERNAME="my-username"
 export GRADLE_ENTERPRISE_PASSWORD="my-password"
