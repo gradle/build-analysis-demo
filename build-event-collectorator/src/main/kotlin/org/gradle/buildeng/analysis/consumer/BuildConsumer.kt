@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference
 class BuildConsumer(private val geServer: ServerConnectionInfo) {
     private val httpClient = HttpClient.newClient(geServer.socketAddress).unsafeSecure()
     private val objectMapper = ObjectMapper()
-    private val eventTypes = setOf("BuildStarted", "LoadBuildStarted", "LoadBuildFinished", "ProjectEvaluationStarted", "ProjectEvaluationFinished", "PluginApplicationStarted", "BuildRequestedTasks", "BuildModes", "DaemonState", "Hardware", "Os", "Jvm", "JvmArgs", "ProjectStructure", "Project", "BasicMemoryStats", "Locality", "Encoding", "ScopeIds", "FileRefRoots", "TaskStarted", "TaskFinished", "BuildCacheRemoteLoadStarted", "BuildCacheRemoteStoreStarted","BuildCacheRemoteStoreFinished", "BuildCachePackStarted", "BuildCachePackFinished", "BuildCacheUnpackStarted", "BuildCacheUnpackFinished", "BuildCacheRemoteLoadFinished", "TestStarted", "TestFinished", "BuildAgent", "ExceptionData", "BuildFinished", "UserTag", "UserLink", "UserNamedValue", "Repository", "ConfigurationResolutionData", "NetworkDownloadActivityStarted", "NetworkDownloadActivityFinished") // "OutputLogEvent", "OutputStyledTextEvent"
+    private val eventTypes = setOf("BuildStarted", "LoadBuildStarted", "LoadBuildFinished", "ProjectEvaluationStarted", "ProjectEvaluationFinished", "PluginApplicationStarted", "BuildRequestedTasks", "BuildModes", "DaemonState", "Hardware", "Os", "Jvm", "JvmArgs", "ProjectStructure", "BasicMemoryStats", "Locality", "Encoding", "ScopeIds", "FileRefRoots", "TaskStarted", "TaskFinished", "BuildCacheRemoteLoadStarted", "BuildCacheRemoteStoreStarted","BuildCacheRemoteStoreFinished", "BuildCachePackStarted", "BuildCachePackFinished", "BuildCacheUnpackStarted", "BuildCacheUnpackFinished", "BuildCacheRemoteLoadFinished", "TestStarted", "TestFinished", "BuildAgent", "ExceptionData", "BuildFinished", "UserTag", "UserLink", "UserNamedValue", "Repository", "ConfigurationResolutionData", "NetworkDownloadActivityStarted", "NetworkDownloadActivityFinished") // "OutputLogEvent", "OutputStyledTextEvent"
     private val storage: Storage = StorageOptions.getDefaultInstance().service
     private val daySlashyFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
 
@@ -40,28 +40,29 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
                 .map { serverSentEvent -> parse(serverSentEvent) }
                 .map { json -> Pair(json["buildId"].asText(), json["timestamp"].asLong()) }
                 .flatMap({ (buildId, timestamp) ->
-                    buildEventStream(buildId)
-                            .doOnSubscribe { println("Streaming events for build $buildId at $timestamp") }
-                            .toList()
-                            .map { serverSentEvents ->
-                                if (timestamp >= stopEpoch) {
-                                    println("Skipping build with timestamp $timestamp which is after $stopEpoch.")
-                                } else {
-                                    try {
-                                        val localDate = Instant.ofEpochMilli(timestamp).atZone(ZoneOffset.UTC).toLocalDate()
-                                        val blobKey = "${localDate.format(daySlashyFormat)}/$buildId-json.txt"
-                                        val blobInfo = BlobInfo
-                                                .newBuilder(BlobId.of(gcsBucketName, blobKey))
-                                                .setContentType("text/plain")
-                                                .build()
+                    if (timestamp >= stopEpoch) {
+                        println("Skipping build with timestamp $timestamp which is after $stopEpoch.")
+                        Observable.empty<ServerSentEvent>()
+                    } else {
+                buildEventStream(buildId)
+                        .doOnSubscribe { println("Streaming events for build $buildId at $timestamp") }
+                        .toList()
+                        .map { serverSentEvents ->
+                            try {
+                                val localDate = Instant.ofEpochMilli(timestamp).atZone(ZoneOffset.UTC).toLocalDate()
+                                val blobKey = "${localDate.format(daySlashyFormat)}/$buildId-json.txt"
+                                val blobInfo = BlobInfo
+                                        .newBuilder(BlobId.of(gcsBucketName, blobKey))
+                                        .setContentType("text/plain")
+                                        .build()
 
-                                        storage.create(blobInfo, byteBufsToJoinedArray(serverSentEvents))
-                                        println("[${System.currentTimeMillis()}] $blobKey written")
-                                    } finally {
-                                        serverSentEvents.forEach { assert(it.release()) }
-                                    }
-                                }
+                                storage.create(blobInfo, byteBufsToJoinedArray(serverSentEvents))
+                                println("[${System.currentTimeMillis()}] $blobKey written")
+                            } finally {
+                                serverSentEvents.forEach { assert(it.release()) }
                             }
+                        }
+                    }
                 }, 20)
                 .toBlocking()
                 .subscribe()
@@ -102,7 +103,7 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
     }
 
     private fun buildEventStream(buildId: String): Observable<ServerSentEvent> {
-        return resume("/build-export/v1/build/$buildId/events?eventTypes=${eventTypes.joinToString(",")}")
+        return resume("/build-export/v1/build/$buildId/events?eventTypes=${eventTypes.joinToString(",")}", null)
     }
 
     private fun resume(url: String, lastEventId: String? = null): Observable<ServerSentEvent> {
