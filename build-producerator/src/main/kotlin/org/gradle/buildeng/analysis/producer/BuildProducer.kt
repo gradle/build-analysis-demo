@@ -53,8 +53,6 @@ class BuildProducer(private val geServer: ServerConnectionInfo) {
                     val messageIds = ApiFutures.allAsList(futures).get()
                     println("${messageIds.size} messages published")
                 })
-
-        // TODO: keep this process alive indefinitely
         return
     }
 
