@@ -105,68 +105,134 @@ Reporting-specific tables must be created in BigQuery in order to keep reasonabl
 You need to use the link:https://cloud.google.com/bigquery/docs/bq-command-line-tool[BigQuery CLI] or API link:https://cloud.google.com/bigquery/docs/creating-column-partitions#creating_a_partitioned_table_from_a_query_result[to create new partitioned tables].
 Using time partitioned tables allows us Data Studio to avoid querying all of the data when querying a subset of the time range.
 
-Here's an example command:
-
-```
-bq --location=US query --destination_table build-analysis:gradle_builds.[TABLE] --time_partitioning_field [COLUMN] --use_legacy_sql=false '[QUERY]'
-```
-
 You can generate tables for various dashboards using the following queries:
 
 ==== Builds Dashboard
 
 ```sql
+bq query --location="US" --destination_table="build-analysis:reports.builds_dashboard" --time_partitioning_field="date" --use_legacy_sql="false" --replace --batch '
 SELECT
   DATE(buildTimestamp) AS date,
   rootProjectName AS project,
-  STARTS_WITH(buildAgentId, 'tcagent') AS isCI,
-  COUNT(buildId) AS count
+  buildId,
+  STARTS_WITH(buildAgentId, "tcagent") AS ci,
+  SUM(wallClockDuration) AS total_build_time
 FROM
   `gradle_builds.builds`
 WHERE
-  buildTimestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 60 DAY)
-GROUP BY 1, 2, 3
-ORDER BY 1 ASC;
+  rootProjectName IN ("gradle",
+    "dotcom",
+    "dotcom-docs",
+    "gradle-kotlin-dsl",
+    "ci-health",
+    "build-analysis",
+    "gradle-profiler",
+    "gradle-site-plugin",
+    "gradlehub")
+  AND buildTimestamp > "2019-01-01"
+GROUP BY
+  1,
+  2,
+  3,
+  4;'
+```
+
+==== Failures Dashboard
+
+```sql
+bq query --location="US" --destination_table="build-analysis:reports.failures_dashboard" --time_partitioning_field="timestamp" --use_legacy_sql="false" --replace --batch '
+SELECT
+  buildId,
+  rootProjectName AS project,
+  buildTimestamp AS timestamp,
+  wallClockDuration AS build_duration,
+  STARTS_WITH(buildAgentId, "tcagent") AS ci,
+  failureData.category AS failure_category,
+  failed_task,
+  JSON_EXTRACT(env.value,
+    "$.name") AS os
+FROM
+  `gradle_builds.builds` builds,
+  UNNEST(failureData.taskPaths) AS failed_task
+CROSS JOIN
+  UNNEST(environmentParameters) AS env
+WHERE
+  rootProjectName IN ("gradle",
+    "dotcom",
+    "dotcom-docs",
+    "gradle-kotlin-dsl",
+    "ci-health",
+    "build-analysis",
+    "gradle-profiler",
+    "gradle-site-plugin",
+    "gradlehub")
+  AND buildTimestamp > "2019-01-01"
+  AND BYTE_LENGTH(failureId) > 0
+  AND env.key = "Os"'
 ```
 
 ==== Tasks and Build Cache Dashboard
 
 ```sql
+bq query --location="US" --destination_table="build-analysis:reports.tasks_dashboard" --time_partitioning_field="date" --use_legacy_sql="false" --replace --batch '
 SELECT
   DATE(buildTimestamp) AS date,
-  rootProjectName as project,
-  CONCAT(tasks.buildPath, ' > ', tasks.path) AS absolute_task_path,
+  rootProjectName AS project,
+  CONCAT(tasks.buildPath, " > ", tasks.path) AS absolute_task_path,
+  tasks.className AS task_type,
   tasks.outcome,
   tasks.cacheable,
   CASE
-    WHEN tasks.cacheable IS FALSE THEN 'NOT_CACHEABLE'
-    WHEN tasks.cacheable IS TRUE AND tasks.outcome IN ('from_cache') THEN 'CACHE_HIT'
-    WHEN tasks.cacheable IS TRUE AND tasks.outcome in ('success', 'failed') THEN 'CACHE_MISS'
-    WHEN tasks.cacheable IS TRUE AND tasks.outcome in ('up_to_date', 'skipped', 'no_source') THEN 'UP_TO_DATE'
-    ELSE 'UNKNOWN'
+    WHEN tasks.cacheable IS FALSE THEN "NOT_CACHEABLE"
+    WHEN tasks.cacheable IS TRUE
+  AND tasks.outcome IN ("from_cache") THEN "CACHE_HIT"
+    WHEN tasks.cacheable IS TRUE AND tasks.outcome IN ("success", "failed") THEN "CACHE_MISS"
+    WHEN tasks.cacheable IS TRUE
+  AND tasks.outcome IN ("up_to_date",
+    "skipped",
+    "no_source") THEN "UP_TO_DATE"
+    ELSE "UNKNOWN"
   END AS cache_use,
-  STARTS_WITH(buildAgentId, 'tcagent') AS ci,
+  STARTS_WITH(buildAgentId, "tcagent") AS ci,
   SUM(tasks.wallClockDuration) AS total_time_ms,
   AVG(tasks.wallClockDuration) AS avg_duration,
-  STDDEV(tasks.wallClockDuration) stddev_duration
+  STDDEV(tasks.wallClockDuration) AS stddev_duration
 FROM
   `gradle_builds.task_executions`,
   UNNEST(tasks) AS tasks
 WHERE
-  buildTimestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 60 DAY)
-GROUP BY 1, 2, 3, 4, 5, 6, 7
-ORDER BY 1 ASC;
+  rootProjectName IN ("gradle",
+    "dotcom",
+    "dotcom-docs",
+    "gradle-kotlin-dsl",
+    "ci-health",
+    "build-analysis",
+    "gradle-profiler",
+    "gradle-site-plugin",
+    "gradlehub")
+  AND buildTimestamp > "2019-01-01"
+GROUP BY
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8;'
 ```
 
 ==== Tests Dashboard
 
 ```sql
+bq query --location="US" --destination_table="build-analysis:reports.tests_dashboard" --time_partitioning_field="date" --use_legacy_sql="false" --replace --batch '
 SELECT
   DATE(buildTimestamp) AS date,
   rootProjectName as project,
-  CONCAT(t.className, '.', t.name) AS test_name,
+  CONCAT(t.className, ".", t.name) AS test_name,
+  t.taskId as task_path,
   exec.failed AS failed,
-  STARTS_WITH(buildAgentId, 'tcagent') AS ci,
+  STARTS_WITH(buildAgentId, "tcagent") AS ci,
   SUM(exec.wallClockDuration) AS total_time_ms,
   AVG(exec.wallClockDuration) AS avg_duration,
   STDDEV(exec.wallClockDuration) stddev_duration
@@ -175,26 +241,53 @@ FROM
   UNNEST(tests) AS t,
   UNNEST(t.executions) AS exec
 WHERE
-  buildTimestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 60 DAY)
+  rootProjectName IN ("gradle",
+    "dotcom",
+    "dotcom-docs",
+    "gradle-kotlin-dsl",
+    "ci-health",
+    "build-analysis",
+    "gradle-profiler",
+    "gradle-site-plugin",
+    "gradlehub")
+  AND buildTimestamp > "2019-01-01"
   AND t.suite = FALSE
-GROUP BY 1, 2, 3, 4, 5
-ORDER BY 1 ASC;
+GROUP BY
+  1,
+  2,
+  3,
+  4,
+  5,
+  6;'
 ```
 
 ==== Dependency Search
 
 ```sql
+bq query --location="US" --destination_table="build-analysis:reports.dependencies_dashboard" --use_legacy_sql="false" --replace --batch '
 SELECT
-  DISTINCT(CONCAT(md.group, ':', md.module)),
+  DISTINCT(CONCAT(md.group, ":", md.module)) AS group_and_module,
   rootProjectName AS project_name,
-  md.version
+  md.version,
+  COUNT(buildId) build_count
 FROM
   `gradle_builds.dependencies` AS d,
   UNNEST(moduleDependencies) AS md
 WHERE
-  buildTimestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 60 DAY)
-GROUP BY 1, 2, 3
-ORDER BY 2, 1, 3;
+  rootProjectName IN ("gradle",
+    "dotcom",
+    "dotcom-docs",
+    "gradle-kotlin-dsl",
+    "ci-health",
+    "build-analysis",
+    "gradle-profiler",
+    "gradle-site-plugin",
+    "gradlehub")
+  AND buildTimestamp > "2019-01-01"
+GROUP BY
+  1,
+  2,
+  3;'
 ```
 
 === Ad-hoc Queries
