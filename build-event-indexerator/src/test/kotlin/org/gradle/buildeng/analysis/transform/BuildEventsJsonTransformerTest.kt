@@ -23,7 +23,7 @@ class BuildEventsJsonTransformerTest {
         assertEquals(false, jsonNode.get("failed").asBoolean())
         assertEquals(2, jsonNode.get("buildRequestedTasks").size())
         assertEquals(0, jsonNode.get("buildExcludedTasks").size())
-        assertEquals(6, jsonNode.get("environmentParameters").size())
+        assertEquals(11, jsonNode.get("environmentParameters").size())
         assertEquals(5, jsonNode.get("userLink").size())
         assertEquals(15, jsonNode.get("userNamedValue").size())
         assertEquals(7, jsonNode.get("userTag").size())
@@ -75,6 +75,21 @@ class BuildEventsJsonTransformerTest {
   }, {
     "key" : "JvmArgs",
     "value" : "{\"effective\":[\"-XX:MaxMetaspaceSize=512m\",\"-XX:+HeapDumpOnOutOfMemoryError\",\"--add-opens=java.base/java.util=ALL-UNNAMED\",\"--add-opens=java.base/java.lang=ALL-UNNAMED\",\"--add-opens=java.base/java.lang.invoke=ALL-UNNAMED\",\"--add-opens=java.prefs/java.util.prefs=ALL-UNNAMED\",\"-Xmx2500m\",\"-Dfile.encoding=UTF-8\",\"-Djava.io.tmpdir=C:\\\\tcagent1\\\\temp\\\\buildTmp\",\"-Duser.country=US\",\"-Duser.language=en\",\"-Duser.variant\"]}"
+  }, {
+    "key" : "Locality",
+    "value" : "{\"localeLanguage\":\"en\",\"localeCountry\":\"US\",\"localeVariant\":\"\",\"timeZoneId\":\"GMT+01:00\",\"timeZoneOffsetMillis\":3600000}"
+  }, {
+    "key" : "Encoding",
+    "value" : "{\"defaultCharset\":\"UTF-8\"}"
+  }, {
+    "key" : "FileRefRoots",
+    "value" : "{\"rootPaths\":{\"WORKSPACE\":\"C:\\\\tcagent1\\\\work\\\\668602365d1521fc\",\"GRADLE_USER_HOME\":\"C:\\\\Users\\\\tcagent1\\\\.gradle\"}}"
+  }, {
+    "key" : "ScopeIds",
+    "value" : "{\"buildInvocationId\":\"anz66mihlbhc5pg4xjrp2lzin4\",\"workspaceId\":\"5xkayv4w7jdlnd5uqil5wzoyqu\",\"userId\":\"vtmsuxgn2bfbrnxfiyxdnyujca\"}"
+  }, {
+    "key" : "BasicMemoryStats",
+    "value" : "{\"free\":449013816,\"total\":1029701632,\"max\":2621440000,\"peakSnapshots\":[{\"name\":\"CodeHeap 'non-nmethods'\",\"heap\":false,\"init\":2555904,\"used\":2433280,\"committed\":2555904,\"max\":5832704},{\"name\":\"Metaspace\",\"heap\":false,\"init\":0,\"used\":111861456,\"committed\":126562304,\"max\":536870912},{\"name\":\"CodeHeap 'profiled nmethods'\",\"heap\":false,\"init\":2555904,\"used\":48333824,\"committed\":58916864,\"max\":122880000},{\"name\":\"Compressed Class Space\",\"heap\":false,\"init\":0,\"used\":14106624,\"committed\":18296832,\"max\":528482304},{\"name\":\"G1 Eden Space\",\"heap\":true,\"init\":25165824,\"used\":367001600,\"committed\":390070272,\"max\":-1},{\"name\":\"G1 Old Gen\",\"heap\":true,\"init\":444596224,\"used\":598592512,\"committed\":975175680,\"max\":2621440000},{\"name\":\"G1 Survivor Space\",\"heap\":true,\"init\":0,\"used\":45088768,\"committed\":45088768,\"max\":-1},{\"name\":\"CodeHeap 'non-profiled nmethods'\",\"heap\":false,\"init\":2555904,\"used\":39802752,\"committed\":39845888,\"max\":122945536}],\"gcTime\":428}"
   } ],
   "buildTimestamp" : "2019-01-01 23:02:51.267+00",
   "wallClockDuration" : 15407,
