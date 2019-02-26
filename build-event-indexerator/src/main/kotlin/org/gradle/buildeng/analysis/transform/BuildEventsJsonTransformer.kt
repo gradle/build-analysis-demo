@@ -58,7 +58,7 @@ class BuildEventsJsonTransformer : EventsJsonTransformer() {
                     buildRequestedTasks.addAll(buildEvent.data.get("requested").map { arg -> arg.asText() })
                     buildExcludedTasks.addAll(buildEvent.data.get("excluded").map { arg -> arg.asText() })
                 }
-                "BuildModes", "DaemonState", "Hardware", "Os", "Jvm", "JvmArgs" -> {
+                "BuildModes", "DaemonState", "Hardware", "Os", "Jvm", "JvmArgs", "BasicMemoryStats", "Locality", "Encoding", "ScopeIds", "FileRefRoots" -> {
                     val environmentData = objectWriter.writeValueAsString(buildEvent.data)
                     environmentParameters.add(EnvironmentParameter(buildEvent.type.eventType, environmentData))
                 }
