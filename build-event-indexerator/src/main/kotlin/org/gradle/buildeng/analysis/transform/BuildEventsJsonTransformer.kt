@@ -24,7 +24,8 @@ class BuildEventsJsonTransformer : EventsJsonTransformer() {
         val buildId = header.get("buildId").asText()
         val buildToolVersion = header.get("gradleVersion").asText()
         var buildStartTimestamp = Instant.ofEpochMilli(header.get("timestamp").asLong())
-        var wallClockDuration: Duration? = null
+        // TODO: measure wall clock duration more accurately given a build that never sends a BuildFinished event. Or perhaps exclude it.
+        var wallClockDuration: Duration = Duration.ZERO
         var failureId = ""
         var failed = false
         var failureData: FailureData? = null
@@ -43,7 +44,7 @@ class BuildEventsJsonTransformer : EventsJsonTransformer() {
                 // NOTE: header (build) timestamp represents when build scan was received, so make sure we use buildStart timestamp to measure build duration
                 "BuildStarted" -> buildStartTimestamp = buildEvent.timestamp
                 "BuildFinished" -> {
-                    wallClockDuration = Duration.between(buildStartTimestamp!!, buildEvent.timestamp)
+                    wallClockDuration = Duration.between(buildStartTimestamp, buildEvent.timestamp)
                     failureId = buildEvent.data.path("failureId").asText()
                     failed = !buildEvent.data.path("failureId").isNull
                 }
@@ -85,7 +86,7 @@ class BuildEventsJsonTransformer : EventsJsonTransformer() {
             }
         }
 
-        val build = Build(buildId, rootProjectName, "Gradle", buildToolVersion, buildAgentId, buildRequestedTasks, buildExcludedTasks, environmentParameters, buildStartTimestamp!!, wallClockDuration!!, failureId, failed, failureData, userLinks, userNamedValues, userTags)
+        val build = Build(buildId, rootProjectName, "Gradle", buildToolVersion, buildAgentId, buildRequestedTasks, buildExcludedTasks, environmentParameters, buildStartTimestamp, wallClockDuration, failureId, failed, failureData, userLinks, userNamedValues, userTags)
         return objectWriter.writeValueAsString(objectMapper.convertValue(build, JsonNode::class.java))
     }
 
