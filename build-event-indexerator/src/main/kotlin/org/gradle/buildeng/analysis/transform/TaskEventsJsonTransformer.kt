@@ -55,7 +55,8 @@ class TaskEventsJsonTransformer : EventsJsonTransformer() {
                     }
                 }
                 "BuildCachePackStarted", "BuildCacheUnpackStarted", "BuildCacheRemoteLoadStarted", "BuildCacheRemoteStoreStarted" -> {
-                    tasks[buildEvent.data.get("task").asText()]!!.buildCacheInteractionIds.add(buildEvent.data.get("id").asText())
+                    val taskExecution = tasks[buildEvent.data.get("task").asText()]
+                    taskExecution?.buildCacheInteractionIds?.add(buildEvent.data.get("id").asText())
                 }
             }
         }
