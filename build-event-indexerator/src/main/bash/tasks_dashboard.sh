@@ -6,7 +6,7 @@ bq query --location="US" --destination_table="build-analysis:reports.tasks_dashb
 SELECT
   DATE(buildTimestamp) AS date,
   rootProjectName AS project,
-  CONCAT(tasks.buildPath, " > ", tasks.path) AS absolute_task_path,
+  CONCAT(tasks.buildPath, ' > ', tasks.path) AS absolute_task_path,
   tasks.className AS task_type,
   tasks.outcome,
   tasks.cacheable,
