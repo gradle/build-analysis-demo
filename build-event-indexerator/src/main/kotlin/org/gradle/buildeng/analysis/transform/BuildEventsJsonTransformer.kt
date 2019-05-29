@@ -81,7 +81,7 @@ class BuildEventsJsonTransformer : EventsJsonTransformer() {
                         )
                     }.toList()
 
-                    failureData = FailureData(categorizeFailure(causes, taskPaths), taskPaths, causes)
+                    failureData = FailureData(classifyFailure(causes, taskPaths), taskPaths, causes)
                 }
             }
         }
@@ -90,23 +90,25 @@ class BuildEventsJsonTransformer : EventsJsonTransformer() {
         return objectWriter.writeValueAsString(objectMapper.convertValue(build, JsonNode::class.java))
     }
 
-    fun categorizeFailure(exceptions: List<ExceptionData>, failedTaskNames: List<String>): String {
+    fun classifyFailure(exceptions: List<ExceptionData>, failedTaskNames: List<String>): String {
         val knownCompilationRelatedExceptionClassNames = listOf("java.lang.ClassFormatError", "java.lang.ClassNotFoundException", "sbt.compiler.CompileFailed", "org.codehaus.groovy.control.MultipleCompilationErrorsException", "java.lang.LinkageError")
         val knownSystemErrorRelatedExceptionClassNames = listOf("java.lang.OutOfMemoryError", "java.lang.StackOverflowError")
 
         return when {
+            exceptions.any { it.className == "org.gradle.api.GradleException" && indicatesVerificationFailure(it.message) } -> "VERIFICATION"
             exceptions.any { knownCompilationRelatedExceptionClassNames.contains(it.className) } -> "COMPILATION"
             exceptions.any { knownSystemErrorRelatedExceptionClassNames.contains(it.className) } -> "SYSTEM_ERROR"
-            exceptions.any {
-                it.className == "java.lang.AssertionError" && failedTaskNames.any { name -> name.toLowerCase().contains("test") }
-                it.className.startsWith("junit.framework") ||
-                        it.className.startsWith("org.junit.") ||
-                        it.className.startsWith("org.mockito.") ||
-                        it.className.startsWith("org.spockframework.") ||
-                        it.className.startsWith("org.codehaus.groovy.runtime.powerassert.")
-            } -> "VERIFICATION"
-            exceptions.any { it.className.startsWith("org.gradle.") && it.className != "org.gradle.api.GradleException" } -> "BUILD_CONFIGURATION"
+            failedTaskNames.isEmpty() || exceptions.any { it.className.startsWith("org.gradle.") && it.className != "org.gradle.api.GradleException" } -> "BUILD_CONFIGURATION"
             else -> "UNKNOWN"
+        }
+    }
+
+    private fun indicatesVerificationFailure(exceptionMessage: String): Boolean {
+        return when {
+            exceptionMessage.contains("fail") && exceptionMessage.contains("test") -> true
+            exceptionMessage.contains("Checkstyle rule violation") -> true
+            exceptionMessage.contains("lint ") -> true
+            else -> false
         }
     }
 }
