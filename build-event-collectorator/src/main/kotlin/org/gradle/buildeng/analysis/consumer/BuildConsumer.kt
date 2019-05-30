@@ -30,7 +30,24 @@ import java.util.concurrent.atomic.AtomicReference
 class BuildConsumer(private val geServer: ServerConnectionInfo) {
     private val httpClient = HttpClient.newClient(geServer.socketAddress).unsafeSecure()
     private val objectMapper = ObjectMapper()
-    private val eventTypes = setOf("BuildStarted", "LoadBuildStarted", "LoadBuildFinished", "ProjectEvaluationStarted", "ProjectEvaluationFinished", "PluginApplicationStarted", "BuildRequestedTasks", "BuildModes", "DaemonState", "Hardware", "Os", "Jvm", "JvmArgs", "ProjectStructure", "BasicMemoryStats", "Locality", "Encoding", "ScopeIds", "FileRefRoots", "TaskStarted", "TaskFinished", "BuildCacheRemoteLoadStarted", "BuildCacheRemoteStoreStarted","BuildCacheRemoteStoreFinished", "BuildCachePackStarted", "BuildCachePackFinished", "BuildCacheUnpackStarted", "BuildCacheUnpackFinished", "BuildCacheRemoteLoadFinished", "TestStarted", "TestFinished", "BuildAgent", "ExceptionData", "BuildFinished", "UserTag", "UserLink", "UserNamedValue", "Repository", "ConfigurationResolutionData", "NetworkDownloadActivityStarted", "NetworkDownloadActivityFinished") // "OutputLogEvent", "OutputStyledTextEvent"
+    private val eventTypes = setOf(
+            "BuildStarted", "MvnBuildStarted", "BuildFinished", "MvnBuildFinished", "MvnExecutionStarted", "MvnExecutionFinished", "MvnProjectStarted", "MvnProjectFinished",
+            "LoadBuildStarted", "LoadBuildFinished", "MvnSettingsStarted", "MvnSettingsFinished",
+            "ProjectEvaluationStarted", "ProjectEvaluationFinished", "MvnToolchainsStarted", "MvnToolchainsFinished",
+            "PluginApplicationStarted", "MvnPluginApplication",
+            "BuildRequestedTasks", "MvnBuildRequestedGoals",
+            "BuildModes", "DaemonState", "JvmArgs", // Gradle-only
+            "Hardware", "MvnHardware", "Os", "MvnOs", "Jvm", "MvnJvm",
+            "ProjectStructure", "MvnProjectStructure", "BasicMemoryStats", "MvnBasicMemoryStats", "Locality", "MvnLocality", "Encoding", "MvnEncoding", "ScopeIds", "MvnScopeIds", "FileRefRoots", "MvnFileRefRoots",
+            "TaskStarted", "TaskFinished", "MvnGoalExecutionStarted", "MvnGoalExecutionFinished",
+            "BuildCacheRemoteLoadStarted", "BuildCacheRemoteStoreStarted","BuildCacheRemoteStoreFinished", "BuildCachePackStarted", "BuildCachePackFinished", "BuildCacheUnpackStarted", "BuildCacheUnpackFinished", "BuildCacheRemoteLoadFinished",
+            "MvnBuildCacheRemoteLoadStarted", "MvnBuildCacheRemoteStoreStarted","MvnBuildCacheRemoteStoreFinished", "MvnBuildCachePackStarted", "MvnBuildCachePackFinished", "MvnBuildCacheUnpackStarted", "MvnBuildCacheUnpackFinished", "MvnBuildCacheRemoteLoadFinished",
+            "TestStarted", "TestFinished", // Tests Gradle-only for now
+            "BuildAgent", "MvnBuildAgent",
+            "ExceptionData", "MvnExceptionData",
+            "UserTag", "MvnUserTag", "UserLink", "MvnUserLink", "UserNamedValue", "MvnUserNamedValue",
+            "Repository", "ConfigurationResolutionData", "NetworkDownloadActivityStarted", "NetworkDownloadActivityFinished" // Network/repo Gradle-only
+    ) // "OutputLogEvent", "OutputStyledTextEvent"
     private val storage: Storage = StorageOptions.getDefaultInstance().service
     private val daySlashyFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
 
