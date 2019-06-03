@@ -40,8 +40,8 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
             "Hardware", "MvnHardware", "Os", "MvnOs", "Jvm", "MvnJvm",
             "ProjectStructure", "MvnProjectStructure", "BasicMemoryStats", "MvnBasicMemoryStats", "Locality", "MvnLocality", "Encoding", "MvnEncoding", "ScopeIds", "MvnScopeIds", "FileRefRoots", "MvnFileRefRoots",
             "TaskStarted", "TaskFinished", "MvnGoalExecutionStarted", "MvnGoalExecutionFinished",
-            "BuildCacheRemoteLoadStarted", "BuildCacheRemoteStoreStarted","BuildCacheRemoteStoreFinished", "BuildCachePackStarted", "BuildCachePackFinished", "BuildCacheUnpackStarted", "BuildCacheUnpackFinished", "BuildCacheRemoteLoadFinished",
-            "MvnBuildCacheRemoteLoadStarted", "MvnBuildCacheRemoteStoreStarted","MvnBuildCacheRemoteStoreFinished", "MvnBuildCachePackStarted", "MvnBuildCachePackFinished", "MvnBuildCacheUnpackStarted", "MvnBuildCacheUnpackFinished", "MvnBuildCacheRemoteLoadFinished",
+            "BuildCacheRemoteLoadStarted", "BuildCacheRemoteStoreStarted", "BuildCacheRemoteStoreFinished", "BuildCachePackStarted", "BuildCachePackFinished", "BuildCacheUnpackStarted", "BuildCacheUnpackFinished", "BuildCacheRemoteLoadFinished",
+            "MvnBuildCacheRemoteLoadStarted", "MvnBuildCacheRemoteStoreStarted", "MvnBuildCacheRemoteStoreFinished", "MvnBuildCachePackStarted", "MvnBuildCachePackFinished", "MvnBuildCacheUnpackStarted", "MvnBuildCacheUnpackFinished", "MvnBuildCacheRemoteLoadFinished",
             "TestStarted", "TestFinished", // Tests Gradle-only for now
             "BuildAgent", "MvnBuildAgent",
             "ExceptionData", "MvnExceptionData",
@@ -51,35 +51,30 @@ class BuildConsumer(private val geServer: ServerConnectionInfo) {
     private val storage: Storage = StorageOptions.getDefaultInstance().service
     private val daySlashyFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
 
-    fun consume(startEpoch: Long, stopEpoch: Long, gcsBucketName: String) {
+    fun consume(startEpoch: Long, gcsBucketName: String) {
         buildStream(startEpoch)
                 .doOnSubscribe { println("Streaming builds from [${geServer.socketAddress.hostName}] to gs://$gcsBucketName/") }
                 .map { serverSentEvent -> parse(serverSentEvent) }
                 .map { json -> Pair(json["buildId"].asText(), json["timestamp"].asLong()) }
                 .flatMap({ (buildId, timestamp) ->
-                    if (timestamp >= stopEpoch) {
-                        println("Skipping build with timestamp $timestamp which is after $stopEpoch.")
-                        Observable.empty<ServerSentEvent>()
-                    } else {
-                buildEventStream(buildId)
-                        .doOnSubscribe { println("Streaming events for build $buildId at $timestamp") }
-                        .toList()
-                        .map { serverSentEvents ->
-                            try {
-                                val localDate = Instant.ofEpochMilli(timestamp).atZone(ZoneOffset.UTC).toLocalDate()
-                                val blobKey = "${localDate.format(daySlashyFormat)}/$buildId-json.txt"
-                                val blobInfo = BlobInfo
-                                        .newBuilder(BlobId.of(gcsBucketName, blobKey))
-                                        .setContentType("text/plain")
-                                        .build()
+                    buildEventStream(buildId)
+                            .doOnSubscribe { println("Streaming events for build $buildId at $timestamp") }
+                            .toList()
+                            .map { serverSentEvents ->
+                                try {
+                                    val localDate = Instant.ofEpochMilli(timestamp).atZone(ZoneOffset.UTC).toLocalDate()
+                                    val blobKey = "${localDate.format(daySlashyFormat)}/$buildId-json.txt"
+                                    val blobInfo = BlobInfo
+                                            .newBuilder(BlobId.of(gcsBucketName, blobKey))
+                                            .setContentType("text/plain")
+                                            .build()
 
-                                storage.create(blobInfo, byteBufsToJoinedArray(serverSentEvents))
-                                println("[${System.currentTimeMillis()}] $blobKey written")
-                            } finally {
-                                serverSentEvents.forEach { assert(it.release()) }
+                                    storage.create(blobInfo, byteBufsToJoinedArray(serverSentEvents))
+                                    println("[${System.currentTimeMillis()}] $blobKey written")
+                                } finally {
+                                    serverSentEvents.forEach { assert(it.release()) }
+                                }
                             }
-                        }
-                    }
                 }, 20)
                 .toBlocking()
                 .subscribe()
