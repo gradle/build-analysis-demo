@@ -5,3 +5,4 @@ build/
 *.ipr
 *.iws
 **/sample-files
+out/
