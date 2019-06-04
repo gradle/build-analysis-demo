@@ -17,7 +17,7 @@ class BigQueryBuildEventsJsonTransformerTest {
     }
 
     @Test fun testTransformEventsFile() {
-        val buildEventsFile = File(this::class.java.classLoader.getResource("all-build-events-json.txt").file)
+        val buildEventsFile = File(this::class.java.classLoader.getResource("gradle-build-events-json.txt").file)
         val jsonNode = BigQueryBuildEventsJsonTransformer().transform(buildEventsFile)
 
         assertEquals("f23vwoax6n4uy", jsonNode.get("buildId").asText())

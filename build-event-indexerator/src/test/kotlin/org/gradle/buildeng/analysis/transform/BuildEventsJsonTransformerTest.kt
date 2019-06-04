@@ -8,8 +8,8 @@ import kotlin.test.assertTrue
 
 class BuildEventsJsonTransformerTest {
     @Test
-    fun testTransformBuild() {
-        val buildEventsFile = File(this::class.java.classLoader.getResource("all-build-events-json.txt").file)
+    fun testTransformGradleBuild() {
+        val buildEventsFile = File(this::class.java.classLoader.getResource("gradle-build-events-json.txt").file)
         val objectMapper = ObjectMapper()
         val jsonNode = objectMapper.readTree(BuildEventsJsonTransformer().transform(buildEventsFile.readText()))
 
@@ -19,7 +19,7 @@ class BuildEventsJsonTransformerTest {
         assertEquals("tcagent1@windows25", jsonNode.get("buildAgentId").asText())
         assertEquals("2019-01-01 23:02:51.267+00", jsonNode.get("buildTimestamp").asText())
         assertEquals(15407, jsonNode.get("wallClockDuration").asInt())
-        assertEquals("", jsonNode.get("failureId").asText())
+        assertEquals(0, jsonNode.get("failureIds").size())
         assertEquals(false, jsonNode.get("failed").asBoolean())
         assertEquals(2, jsonNode.get("buildRequestedTasks").size())
         assertEquals(0, jsonNode.get("buildExcludedTasks").size())
@@ -32,21 +32,54 @@ class BuildEventsJsonTransformerTest {
     }
 
     @Test
-    fun testTransformBuildWithFailure() {
+    fun testTransformMavenBuild() {
+        val buildEventsFile = File(this::class.java.classLoader.getResource("maven-failed-json.txt").file)
+        val objectMapper = ObjectMapper()
+        val jsonNode = objectMapper.readTree(BuildEventsJsonTransformer().transform(buildEventsFile.readText()))
+
+        assertEquals("timeline-failed-goals", jsonNode.get("rootProjectName").asText())
+        assertEquals("qjxkgdbcuaac2", jsonNode.get("buildId").asText())
+        assertEquals("3.6.1", jsonNode.get("buildToolVersion").asText())
+        assertEquals("tcagent1@dev31.gradle.org", jsonNode.get("buildAgentId").asText())
+        assertEquals("2019-06-03 07:26:10.170+00", jsonNode.get("buildTimestamp").asText())
+        assertEquals(1740, jsonNode.get("wallClockDuration").asInt())
+        assertTrue(jsonNode.get("failed").asBoolean())
+        assertEquals(2, jsonNode.get("failureIds").size())
+        assertEquals("6929713202549594971", jsonNode.get("failureIds")[0].asText())
+        assertEquals("-4272005080405076924", jsonNode.get("failureIds")[1].asText())
+        assertEquals(2, jsonNode.get("buildRequestedTasks").size())
+        assertEquals(0, jsonNode.get("buildExcludedTasks").size())
+        assertEquals(8, jsonNode.get("environmentParameters").size())
+        assertEquals(0, jsonNode.get("userLink").size())
+        assertEquals(3, jsonNode.get("userNamedValue").size())
+        assertEquals(0, jsonNode.get("userTag").size())
+
+        assertEquals("VERIFICATION", jsonNode.get("failureData").get("category").asText())
+        assertEquals("org.apache.maven.plugin.compiler.CompilationFailureException", jsonNode.get("failureData").get("causes")[0].get("exceptionClassName").asText())
+        assertEquals("compiler:compile", jsonNode.get("failureData").get("causes")[1].get("failedTaskGoalName").asText())
+        assertEquals("org.apache.maven.plugin.compiler.CompilerMojo", jsonNode.get("failureData").get("causes")[1].get("failedTaskTypeOrMojoClassName").asText())
+
+        assertEquals(expectedOutputMaven, objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode))
+    }
+
+    @Test
+    fun testTransformGradleBuildWithFailure() {
         val buildEventsFile = File(this::class.java.classLoader.getResource("failing-test-events-json.txt").file)
         val objectMapper = ObjectMapper()
         val jsonNode = objectMapper.readTree(BuildEventsJsonTransformer().transform(buildEventsFile.readText()))
 
         assertEquals("build-analysis", jsonNode.get("rootProjectName").asText())
         assertEquals("cokuz2qlzlhck", jsonNode.get("buildId").asText())
-        assertEquals("3107853242888327571", jsonNode.get("failureId").asText())
+        assertEquals(1, jsonNode.get("failureIds").size())
+        assertEquals("3107853242888327571", jsonNode.get("failureIds")[0].asText())
         assertEquals(true, jsonNode.get("failed").asBoolean())
         assertEquals("VERIFICATION", jsonNode.get("failureData").get("category").asText())
-        assertEquals(":build-event-transformerator:test", jsonNode.get("failureData").get("taskPaths")[0].asText())
         assertTrue(jsonNode.get("failureData").get("causes").isArray)
-        assertEquals(2, jsonNode.get("failureData").get("causes").size())
-        assertEquals("org.junit.ComparisonFailure", jsonNode.get("failureData").get("causes")[0].get("className").asText())
-        assertEquals("org.gradle.api.GradleException", jsonNode.get("failureData").get("causes")[1].get("className").asText())
+        assertEquals(4, jsonNode.get("failureData").get("causes").size())
+        assertEquals(":build-event-transformerator:test", jsonNode.get("failureData").get("causes")[2].get("failedTaskGoalName").asText())
+        assertEquals("org.junit.ComparisonFailure", jsonNode.get("failureData").get("causes")[0].get("exceptionClassName").asText())
+        assertEquals("org.gradle.api.tasks.testing.Test", jsonNode.get("failureData").get("causes")[2].get("failedTaskTypeOrMojoClassName").asText())
+        assertEquals("org.gradle.api.GradleException", jsonNode.get("failureData").get("causes")[3].get("exceptionClassName").asText())
     }
 
     private val expectedOutput = """{
@@ -93,7 +126,7 @@ class BuildEventsJsonTransformerTest {
   } ],
   "buildTimestamp" : "2019-01-01 23:02:51.267+00",
   "wallClockDuration" : 15407,
-  "failureId" : "",
+  "failureIds" : [ ],
   "failed" : false,
   "failureData" : null,
   "userLink" : [ {
@@ -159,6 +192,86 @@ class BuildEventsJsonTransformerTest {
     "value" : "8f76bfec5408d18e8414e586dba94759"
   } ],
   "userTag" : [ "Check", "FunctionalTest", "ReadyforMerge", "CI", "CACHED", "release", "dirty" ]
+}
+    """.trimIndent()
+
+    private val expectedOutputMaven = """{
+  "buildId" : "qjxkgdbcuaac2",
+  "rootProjectName" : "timeline-failed-goals",
+  "buildTool" : "Maven",
+  "buildToolVersion" : "3.6.1",
+  "buildAgentId" : "tcagent1@dev31.gradle.org",
+  "buildRequestedTasks" : [ "clean", "compile" ],
+  "buildExcludedTasks" : [ ],
+  "environmentParameters" : [ {
+    "key" : "MvnHardware",
+    "value" : "{\"numProcessors\":8}"
+  }, {
+    "key" : "MvnOs",
+    "value" : "{\"family\":\"linux\",\"name\":\"Linux\",\"version\":\"4.15.0-50-generic\",\"arch\":\"amd64\"}"
+  }, {
+    "key" : "MvnJvm",
+    "value" : "{\"version\":\"1.8.0_181\",\"vendor\":\"Oracle Corporation\",\"runtimeName\":\"Java(TM) SE Runtime Environment\",\"runtimeVersion\":\"1.8.0_181-b13\",\"classVersion\":\"52.0\",\"vmInfo\":\"mixed mode\",\"vmName\":\"Java HotSpot(TM) 64-Bit Server VM\",\"vmVersion\":\"25.181-b13\",\"vmVendor\":\"Oracle Corporation\"}"
+  }, {
+    "key" : "MvnLocality",
+    "value" : "{\"localeLanguage\":\"en\",\"localeCountry\":\"US\",\"localeVariant\":\"\",\"timeZoneId\":\"Europe/Berlin\",\"timeZoneOffsetMillis\":7200000}"
+  }, {
+    "key" : "MvnEncoding",
+    "value" : "{\"defaultCharset\":\"UTF-8\"}"
+  }, {
+    "key" : "MvnFileRefRoots",
+    "value" : "{\"rootPaths\":{\"WORKSPACE\":\"/home/tcagent1/agent/work/8d3306ac5f39e07b/maven-scans-example-builds/build/gen-work/timeline-failed-goals-1.0.8\"}}"
+  }, {
+    "key" : "MvnScopeIds",
+    "value" : "{\"buildInvocationId\":\"67sabxrb5rcfzluqun7gfusrh4\"}"
+  }, {
+    "key" : "MvnBasicMemoryStats",
+    "value" : "{\"max\":7443841024,\"peakSnapshots\":[{\"name\":\"Code Cache\",\"heap\":false,\"init\":2555904,\"used\":7021440,\"committed\":7077888,\"max\":251658240},{\"name\":\"Metaspace\",\"heap\":false,\"init\":0,\"used\":30623104,\"committed\":32112640,\"max\":-1},{\"name\":\"Compressed Class Space\",\"heap\":false,\"init\":0,\"used\":3943992,\"committed\":4325376,\"max\":1073741824},{\"name\":\"PS Eden Space\",\"heap\":true,\"init\":131596288,\"used\":131596288,\"committed\":168820736,\"max\":2750939136},{\"name\":\"PS Survivor Space\",\"heap\":true,\"init\":21495808,\"used\":21365600,\"committed\":21495808,\"max\":21495808},{\"name\":\"PS Old Gen\",\"heap\":true,\"init\":349700096,\"used\":20408408,\"committed\":349700096,\"max\":5582618624}],\"gcTime\":68}"
+  } ],
+  "buildTimestamp" : "2019-06-03 07:26:10.170+00",
+  "wallClockDuration" : 1740,
+  "failureIds" : [ "6929713202549594971", "-4272005080405076924" ],
+  "failed" : true,
+  "failureData" : {
+    "category" : "VERIFICATION",
+    "causes" : [ {
+      "exceptionId" : "6093028342085047029",
+      "exceptionClassName" : "org.apache.maven.plugin.compiler.CompilationFailureException",
+      "message" : "Compilation failure\n/home/tcagent1/agent/work/8d3306ac5f39e07b/maven-scans-example-builds/build/gen-work/timeline-failed-goals-1.0.8/b/src/main/java/Error.java:[1,1] class, interface, or enum expected\n",
+      "failedTaskGoalName" : null,
+      "failedTaskTypeOrMojoClassName" : null
+    }, {
+      "exceptionId" : "6929713202549594971",
+      "exceptionClassName" : "org.apache.maven.lifecycle.LifecycleExecutionException",
+      "message" : "Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.1:compile (default-compile) on project a: Compilation failure\n/home/tcagent1/agent/work/8d3306ac5f39e07b/maven-scans-example-builds/build/gen-work/timeline-failed-goals-1.0.8/a/src/main/java/Error.java:[1,1] class, interface, or enum expected\n",
+      "failedTaskGoalName" : "compiler:compile",
+      "failedTaskTypeOrMojoClassName" : "org.apache.maven.plugin.compiler.CompilerMojo"
+    }, {
+      "exceptionId" : "-4272005080405076924",
+      "exceptionClassName" : "org.apache.maven.lifecycle.LifecycleExecutionException",
+      "message" : "Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.1:compile (default-compile) on project b: Compilation failure\n/home/tcagent1/agent/work/8d3306ac5f39e07b/maven-scans-example-builds/build/gen-work/timeline-failed-goals-1.0.8/b/src/main/java/Error.java:[1,1] class, interface, or enum expected\n",
+      "failedTaskGoalName" : "compiler:compile",
+      "failedTaskTypeOrMojoClassName" : "org.apache.maven.plugin.compiler.CompilerMojo"
+    }, {
+      "exceptionId" : "-7666900219935905648",
+      "exceptionClassName" : "org.apache.maven.plugin.compiler.CompilationFailureException",
+      "message" : "Compilation failure\n/home/tcagent1/agent/work/8d3306ac5f39e07b/maven-scans-example-builds/build/gen-work/timeline-failed-goals-1.0.8/a/src/main/java/Error.java:[1,1] class, interface, or enum expected\n",
+      "failedTaskGoalName" : null,
+      "failedTaskTypeOrMojoClassName" : null
+    } ]
+  },
+  "userLink" : [ ],
+  "userNamedValue" : [ {
+    "key" : "example-build-description",
+    "value" : "A project with failing goals"
+  }, {
+    "key" : "example-build-identifier",
+    "value" : "timeline-failed-goals"
+  }, {
+    "key" : "example-build-type",
+    "value" : "Scan"
+  } ],
+  "userTag" : [ ]
 }
     """.trimIndent()
 }
