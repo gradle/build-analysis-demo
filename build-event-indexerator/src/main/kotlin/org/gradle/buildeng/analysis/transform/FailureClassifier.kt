@@ -50,7 +50,7 @@ object VerificationFailureClassifier : BinaryFailureClassifier {
             exceptions.any { knownCompilationRelatedExceptionClassNames.contains(it.exceptionClassName) } -> 0.95
             gradleExceptionMessages.any { it.contains("fail") && it.contains("test") } -> 0.95
             exceptions.any { it.failedTaskGoalName != null && it.failedTaskGoalName.contains("codenarc") } && gradleExceptionMessages.any { it.contains("violation") } -> 0.95
-            exceptions.any { it.failedTaskGoalName != null && it.failedTaskGoalName.toLowerCase().contains("test") } && gradleExceptionMessages.any { it.contains("fail") } -> 0.95
+            exceptions.any { it.failedTaskTypeOrMojoClassName != null && it.failedTaskTypeOrMojoClassName.contains("Test") && it.message.contains("fail") } -> 0.95
             else -> 0.05
         }
     }

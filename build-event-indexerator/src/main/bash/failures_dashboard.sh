@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-MONITORED_PROJECTS="'gradle','dotcom','dotcom-docs','gradle-kotlin-dsl','ci-health','build-analysis','gradle-profiler','gradle-site-plugin','gradlehub'"
 START_DATE="2019-01-01"
 
 bq query --location="US" --destination_table="build-analysis:reports.failures_dashboard" --time_partitioning_field="timestamp" --use_legacy_sql="false" --replace --batch "
@@ -8,19 +7,36 @@ SELECT
   buildId,
   rootProjectName AS project,
   buildTimestamp AS timestamp,
-  wallClockDuration AS build_duration,
-  STARTS_WITH(buildAgentId, 'tcagent') AS ci,
-  failureData.category AS failure_category,
-  failed_task,
+  ARRAY_TO_STRING(failureIds, ' ') AS failureIds,
+  failureData.category,
   JSON_EXTRACT(env.value,
-    '$.name') AS os
+    '$.name') AS os,
+  (
+  SELECT
+    failedTaskGoalName
+  FROM
+    UNNEST(failureData.causes)
+  WHERE
+    BYTE_LENGTH(failedTaskGoalName) > 0
+  LIMIT
+    1) AS failedTaskGoalName,
+  (
+  SELECT
+    failedTaskTypeOrMojoClassName
+  FROM
+    UNNEST(failureData.causes)
+  WHERE
+    BYTE_LENGTH(failedTaskTypeOrMojoClassName) > 0
+  LIMIT
+    1) AS failedTaskTypeOrMojoClassName
 FROM
-  \`gradle_builds.builds\` builds,
-  UNNEST(failureData.taskPaths) AS failed_task
+  \`gradle_builds.builds\` builds
 CROSS JOIN
   UNNEST(environmentParameters) AS env
 WHERE
-  rootProjectName IN (${MONITORED_PROJECTS})
+  buildTool = 'Gradle'
   AND buildTimestamp > '${START_DATE}'
-  AND BYTE_LENGTH(failureId) > 0
+  AND BYTE_LENGTH(failureData.category) > 0
+  AND ARRAY_LENGTH(failureIds) > 0
   AND env.key = 'Os'"
+
