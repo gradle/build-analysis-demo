@@ -11,7 +11,7 @@ buildScan {
 
 allprojects {
     group = "org.gradle.buildeng.analysis"
-    version = "0.6.1"
+    version = "0.6.2"
 
     repositories {
         maven { url = uri("https://maven-central.storage.googleapis.com") }
