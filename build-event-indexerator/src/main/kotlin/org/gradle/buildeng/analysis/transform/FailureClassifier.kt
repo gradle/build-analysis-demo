@@ -42,6 +42,7 @@ object VerificationFailureClassifier : BinaryFailureClassifier {
 
         return when {
             gradleExceptionMessages.any { it.startsWith("There were failing tests") } -> 1.0
+            gradleExceptionMessages.any { it.startsWith("Condition failed with Exception") } -> 1.0
             gradleExceptionMessages.any { it.contains("Checkstyle rule violation") } -> 1.0
             exceptions.any {
                 val messageSummary = it.message.trim().toLowerCase().substringBefore("\n")
