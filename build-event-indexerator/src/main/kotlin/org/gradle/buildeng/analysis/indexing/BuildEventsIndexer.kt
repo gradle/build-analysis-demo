@@ -17,6 +17,7 @@ object BuildEventsIndexer {
         val (pipe, options) = KPipe.from<IndexingDataflowPipelineOptions>(args)
 
         pipe.fromFiles(input = options.input)
+                .filter { it.value.length > 300 }
                 .map { BuildEventsJsonTransformer().transform(it.value) }
                 .map { convertJsonToTableRow(it)!! }
                 .toTable("Write to BigQuery", options.output, tableSchema, timePartitioning)
