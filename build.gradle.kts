@@ -1,6 +1,6 @@
 plugins {
     `build-scan`
-    `kotlin-dsl`
+    kotlin("jvm").apply(false)
 }
 
 buildScan {
@@ -17,12 +17,25 @@ allprojects {
         maven { url = uri("https://maven-central.storage.googleapis.com") }
         jcenter()
     }
+
+    // Get DRY with dependency versions
+    configurations.all {
+        resolutionStrategy {
+            eachDependency {
+                default("org.jetbrains.kotlin", "1.3.50")
+                default("org.apache.beam", "2.10.0")
+                default("com.google.cloud", "1.63.0")
+                default("com.fasterxml.jackson.core", "2.8.2")
+                default("io.netty", "4.1.5.Final")
+                default("io.reactivex", "0.5.2")
+            }
+        }
+    }
 }
 
-subprojects {
-    apply(plugin = "org.gradle.kotlin.kotlin-dsl")
-
-    kotlinDslPluginOptions {
-        experimentalWarning.set(false)
+fun DependencyResolveDetails.default(group: String, version: String) {
+    if(requested.group == group && requested.version.isNullOrBlank()) {
+        useVersion(version)
+        because("Selected default as no other version was requested")
     }
 }

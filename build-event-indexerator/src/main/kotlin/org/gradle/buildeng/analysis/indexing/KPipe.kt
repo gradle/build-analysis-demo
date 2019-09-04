@@ -85,7 +85,7 @@ inline fun <I, reified O> PCollection<I>.map(
 inline fun <reified I> PCollection<I>.filter(
         name: String = "filter ${I::class.simpleName}",
         noinline transform: (I) -> Boolean): PCollection<I> {
-    val pc = this.apply(name, Filter.by(SerializableFunction { transform(it) }))
+    val pc = this.apply(name, Filter.by(SerializableFunction <I, Boolean>{ transform(it) }))
     return pc.setCoder(NullableCoder.of(pc.coder))
 }
 
@@ -108,7 +108,7 @@ fun convertJsonToTableRow(json: String): TableRow? {
     var row: TableRow? = null
     try {
         ByteArrayInputStream(json.toByteArray(StandardCharsets.UTF_8)).use { inputStream ->
-            row = TableRowJsonCoder.of().decode(inputStream, Coder.Context.OUTER)
+            row = TableRowJsonCoder.of().decode(inputStream)
         }
     } catch (e: IOException) {
         throw RuntimeException("Failed to serialize json to table row: $json", e)
