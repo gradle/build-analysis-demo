@@ -1,19 +1,18 @@
 plugins {
-    kotlin("jvm")
     application
     `maven-publish`
 }
 
 dependencies {
     implementation(project(":analysis-common"))
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("io.netty:netty-codec-http")
-    implementation("io.reactivex:rxnetty-common")
-    implementation("io.reactivex:rxnetty-http")
+    implementation(kotlin("stdlib", "1.3.21"))
+    implementation("io.netty:netty-codec-http:4.1.5.Final")
+    implementation("io.reactivex:rxnetty-common:0.5.2")
+    implementation("io.reactivex:rxnetty-http:0.5.2")
     implementation("io.reactivex:rxjava:1.2.10")
 
-    implementation("com.fasterxml.jackson.core:jackson-databind")
-    implementation("com.google.cloud:google-cloud-storage")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.8.2")
+    implementation("com.google.cloud:google-cloud-storage:1.63.0")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
