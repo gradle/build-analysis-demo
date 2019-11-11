@@ -16,6 +16,7 @@ data class TaskExecution(
         val path: String,
         val startTimestamp: Instant,
         var wallClockDuration: Duration? = null,
+        var avoidedExecutionTimeMs: Long? = null,
         var buildPath: String? = null,
         var className: String? = null,
         var outcome: String? = null,

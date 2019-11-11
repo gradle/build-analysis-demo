@@ -25,6 +25,7 @@ class TaskEventsJsonTransformerTest {
         assertEquals("2019-01-01 23:02:52.179+00", firstTask.get("startTimestamp").asText())
         assertEquals("1", firstTask.get("wallClockDuration").asText())
         assertEquals("success", firstTask.get("outcome").asText())
+        assertEquals(0, firstTask.get("avoidedExecutionTimeMs").asLong())
     }
 
     @Test fun testTransformTaskStarted1_2() {

@@ -50,6 +50,7 @@ class TaskEventsJsonTransformer : EventsJsonTransformer() {
                         this.wallClockDuration = Duration.between(tasks[taskId]!!.startTimestamp, buildEvent.timestamp)
                         this.outcome = buildEvent.data.path("outcome").asText()
                         this.cacheable = buildEvent.data.path("cacheable").asBoolean()
+                        this.avoidedExecutionTimeMs = computeAvoidedTime(buildEvent.data.path("outcome").asText(), buildEvent.data.path("originExecutionTime").asLong())
                         this.cachingDisabledReasonCategory = buildEvent.data.path("cachingDisabledReasonCategory").asText()
                         this.actionable = buildEvent.data.path("actionable").asBoolean()
                     }
@@ -63,5 +64,12 @@ class TaskEventsJsonTransformer : EventsJsonTransformer() {
 
         val outputJson = objectMapper.convertValue(taskExecutions.copy(tasks = tasks.values.toList()), JsonNode::class.java)
         return objectWriter.writeValueAsString(outputJson)
+    }
+
+    private fun computeAvoidedTime(outcome: String, originExecutionTime: Long?): Long? {
+        if (outcome == "up_to_date" || outcome == "from_cache") {
+            return originExecutionTime
+        }
+        return null
     }
 }
