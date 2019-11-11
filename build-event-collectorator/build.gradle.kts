@@ -30,6 +30,6 @@ publishing {
         }
     }
     publications.withType<MavenPublication> {
-        artifact(tasks.named("distZip").get())
+        artifact(tasks.distZip.get())
     }
 }
