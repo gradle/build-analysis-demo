@@ -122,7 +122,7 @@ FROM
 WHERE
   rootProjectName IN ("gradle",
     "dotcom",
-    "dotcom-docs",
+    "documentation-portal",
     "gradle-kotlin-dsl",
     "ci-health",
     "build-analysis",
@@ -159,7 +159,7 @@ CROSS JOIN
 WHERE
   rootProjectName IN ("gradle",
     "dotcom",
-    "dotcom-docs",
+    "documentation-portal",
     "gradle-kotlin-dsl",
     "ci-health",
     "build-analysis",
@@ -203,7 +203,7 @@ FROM
 WHERE
   rootProjectName IN ("gradle",
     "dotcom",
-    "dotcom-docs",
+    "documentation-portal",
     "gradle-kotlin-dsl",
     "ci-health",
     "build-analysis",
@@ -243,7 +243,7 @@ FROM
 WHERE
   rootProjectName IN ("gradle",
     "dotcom",
-    "dotcom-docs",
+    "documentation-portal",
     "gradle-kotlin-dsl",
     "ci-health",
     "build-analysis",
@@ -276,7 +276,7 @@ FROM
 WHERE
   rootProjectName IN ("gradle",
     "dotcom",
-    "dotcom-docs",
+    "documentation-portal",
     "gradle-kotlin-dsl",
     "ci-health",
     "build-analysis",

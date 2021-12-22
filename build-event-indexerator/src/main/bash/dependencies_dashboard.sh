@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MONITORED_PROJECTS="'gradle','dotcom','dotcom-docs','gradle-kotlin-dsl','ci-health','build-analysis','gradle-profiler','gradle-site-plugin','gradlehub'"
+MONITORED_PROJECTS="'gradle','dotcom','documentation-portal','gradle-kotlin-dsl','ci-health','build-analysis','gradle-profiler','gradle-site-plugin','gradlehub'"
 
 bq query --location="US" --destination_table="build-analysis:reports.dependencies_dashboard" --use_legacy_sql="false" --replace --batch "
 SELECT
